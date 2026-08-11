@@ -5,15 +5,16 @@ import {
   Image,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
   StatusBar,
   KeyboardAvoidingView,
   Platform,
+  BackHandler,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { CheckCircle2, XCircle, Trophy, ArrowRight, RotateCcw, BookOpen, Volume2 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { spacing, layout } from '../../../shared/theme/spacing';
 import { colors } from '../../../shared/theme/colors';
@@ -37,6 +38,7 @@ import { AIQuizQuestionEntity } from '../../../domain/entities/AIQuiz';
 import { aiLessonRepository } from '../../../infrastructure/supabase/aiLessonRepository';
 import { shuffle } from '../../../shared/utils/arrayUtils';
 import { getVocabularyImageUrl } from '../../../shared/utils/vocabularyImageMap';
+import { parseTtsAudioUrl } from '../../../shared/utils/ttsStorage';
 
 function getLangField<T extends Record<string, any>>(obj: T, prefix: string, langCode: string): string {
   if (!obj) return '';
@@ -53,6 +55,20 @@ function getLangField<T extends Record<string, any>>(obj: T, prefix: string, lan
   if (fallbackSnake in obj && obj[fallbackSnake]) return String(obj[fallbackSnake]);
 
   return '';
+}
+
+function getQuizAnswerAudioUrl(question: AIQuizQuestionEntity | undefined, language: string): string | null {
+  const data = question?.questionData;
+  if (!data) return null;
+
+  return parseTtsAudioUrl(
+    data.ttsAudioUrl || data.tts_audio_url,
+    language,
+    'word',
+    data.conceptCode || data.word,
+    data.category,
+    data.difficultyLevel,
+  );
 }
 
 export type QuizScreenState = 'loading' | 'question' | 'correct' | 'incorrect' | 'completed';
@@ -74,13 +90,51 @@ export const QuizScreen: React.FC<QuizScreenProps> = React.memo(({
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
   const theme = useThemeStore((state) => state.theme);
+  const insets = useSafeAreaInsets();
+
+  const handleQuizBack = useCallback(() => {
+    ttsService.stop();
+    if (onBack) {
+      onBack();
+    } else if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)');
+    }
+  }, [onBack, router]);
+
+  useEffect(() => {
+    sessionIdRef.current += 1;
+    return () => {
+      sessionIdRef.current += 1;
+      if (transitionTimerRef.current) {
+        clearTimeout(transitionTimerRef.current);
+        transitionTimerRef.current = null;
+      }
+      ttsService.stop();
+    };
+  }, []);
+
+  useEffect(() => {
+    const onHardwareBack = () => {
+      handleQuizBack();
+      return true;
+    };
+    const subscription = BackHandler.addEventListener('hardwareBackPress', onHardwareBack);
+    return () => subscription.remove();
+  }, [handleQuizBack]);
 
   // 1. Local React State
   const [currentIndex, setCurrentIndex] = useState(0);
   const [screenState, setScreenState] = useState<QuizScreenState>('question');
   const [selectedOption, setSelectedOption] = useState<any | null>(null);
   const [correctAnswersCount, setCorrectAnswersCount] = useState(0);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const answerLockRef = React.useRef(false);
+  const completionSubmittedRef = React.useRef(false);
+  const correctAnswersRef = React.useRef(0);
+  const sessionIdRef = React.useRef(0);
+  const transitionTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const submittedSrsRef = React.useRef(new Set<string>());
 
   // 2. TanStack Query: Fetch Lesson Vocabularies to build 10 Image-to-Word Quiz Questions
   const { data: rawLessonVocabs = [], isLoading, isError, refetch } = useQuery({
@@ -99,9 +153,17 @@ export const QuizScreen: React.FC<QuizScreenProps> = React.memo(({
       const word = vocab ? getLangField(vocab, 'word', targetLang) || vocab.conceptCode : 'Word';
       const wordEn = vocab ? getLangField(vocab, 'word', 'en') || word : word;
       const meaning = vocab ? getLangField(vocab, 'word', nativeLang) || 'Meaning' : 'Meaning';
-      const rawImage = vocab?.imageUrl || undefined;
-      const imageUrl = getVocabularyImageUrl(wordEn || vocab?.conceptCode || word, rawImage);
-      return { id: item.vocabularyId || item.id, word, meaning, imageUrl };
+      const imageUrl = getVocabularyImageUrl(wordEn || vocab?.conceptCode || word);
+      return {
+        id: item.vocabularyId || item.id,
+        word,
+        meaning,
+        imageUrl,
+        ttsAudioUrl: vocab?.ttsAudioUrl,
+        conceptCode: vocab?.conceptCode,
+        category: vocab?.category,
+        difficultyLevel: vocab?.difficultyLevel,
+      };
     });
 
     const finalWords = words;
@@ -123,6 +185,10 @@ export const QuizScreen: React.FC<QuizScreenProps> = React.memo(({
           vocabularyId: item.id,
           word: item.word,
           meaning: item.meaning,
+          ttsAudioUrl: item.ttsAudioUrl,
+          conceptCode: item.conceptCode,
+          category: item.category,
+          difficultyLevel: item.difficultyLevel,
         },
         createdAt: new Date().toISOString(),
       };
@@ -150,14 +216,17 @@ export const QuizScreen: React.FC<QuizScreenProps> = React.memo(({
 
   // 3. Handle Next Question / Quiz Final Completion
   const handleNextQuestion = useCallback(async () => {
+    if (completionSubmittedRef.current) return;
+
     if (currentIndex < totalQuestions - 1) {
       setCurrentIndex((prev) => prev + 1);
       setSelectedOption(null);
       setScreenState('question');
+      answerLockRef.current = false;
     } else {
       // Final Completion
-      setIsSubmitting(true);
-      const finalScorePct = Math.round((correctAnswersCount / (totalQuestions || 1)) * 100);
+      completionSubmittedRef.current = true;
+      const finalScorePct = Math.round((correctAnswersRef.current / (totalQuestions || 1)) * 100);
 
       try {
         if (user?.id && lessonId) {
@@ -172,15 +241,16 @@ export const QuizScreen: React.FC<QuizScreenProps> = React.memo(({
       } catch (err) {
         console.warn('[QuizScreen] Final quiz submission warning:', err);
       } finally {
-        setIsSubmitting(false);
         setScreenState('completed');
       }
     }
-  }, [currentIndex, totalQuestions, correctAnswersCount, user?.id, lessonId]);
+  }, [currentIndex, totalQuestions, user?.id, lessonId]);
 
   // 4. Handle Option Selection & SRS Review Update
   const handleSelectOption = useCallback(async (option: any) => {
-    if (screenState !== 'question' || !currentQuestion) return;
+    if (screenState !== 'question' || !currentQuestion || answerLockRef.current || completionSubmittedRef.current) return;
+    answerLockRef.current = true;
+    const sessionId = sessionIdRef.current;
 
     setSelectedOption(option);
     const selectedText = typeof option === 'string' ? option : option?.text || option?.word || option?.url || '';
@@ -194,26 +264,30 @@ export const QuizScreen: React.FC<QuizScreenProps> = React.memo(({
     const advanceToNext = () => {
       if (hasAdvanced) return;
       hasAdvanced = true;
-      setTimeout(() => {
-        handleNextQuestion();
+      transitionTimerRef.current = setTimeout(() => {
+        transitionTimerRef.current = null;
+        if (sessionId === sessionIdRef.current) handleNextQuestion();
       }, 950);
     };
 
     ttsService.speak({
       text: currentQuestion.correctAnswer,
       language: targetLang,
+      audioUrl: getQuizAnswerAudioUrl(currentQuestion, targetLang),
       onEnd: advanceToNext,
       onError: advanceToNext,
     });
 
     // Safety fallback timer if onEnd is delayed on some web browsers
-    setTimeout(advanceToNext, 2000);
+    transitionTimerRef.current = setTimeout(advanceToNext, 2000);
 
     if (isCorrect) {
       setScreenState('correct');
+      correctAnswersRef.current += 1;
       setCorrectAnswersCount((prev) => prev + 1);
       soundService.playCorrectSound();
-      if (user?.id && vocabularyId) {
+      if (user?.id && vocabularyId && !submittedSrsRef.current.has(vocabularyId)) {
+        submittedSrsRef.current.add(vocabularyId);
         try {
           await reviewService.upsertReviewItem(user.id, vocabularyId, 'easy');
         } catch (err) {
@@ -223,7 +297,8 @@ export const QuizScreen: React.FC<QuizScreenProps> = React.memo(({
     } else {
       setScreenState('incorrect');
       soundService.playIncorrectSound();
-      if (user?.id && vocabularyId) {
+      if (user?.id && vocabularyId && !submittedSrsRef.current.has(vocabularyId)) {
+        submittedSrsRef.current.add(vocabularyId);
         try {
           await reviewService.upsertReviewItem(user.id, vocabularyId, 'forgot');
         } catch (err) {
@@ -234,6 +309,15 @@ export const QuizScreen: React.FC<QuizScreenProps> = React.memo(({
   }, [screenState, currentQuestion, user?.id, user?.targetLang, handleNextQuestion]);
 
   const handleRestartQuiz = useCallback(() => {
+    if (transitionTimerRef.current) {
+      clearTimeout(transitionTimerRef.current);
+      transitionTimerRef.current = null;
+    }
+    sessionIdRef.current += 1;
+    answerLockRef.current = false;
+    completionSubmittedRef.current = false;
+    correctAnswersRef.current = 0;
+    submittedSrsRef.current.clear();
     setCurrentIndex(0);
     setCorrectAnswersCount(0);
     setSelectedOption(null);
@@ -258,7 +342,7 @@ export const QuizScreen: React.FC<QuizScreenProps> = React.memo(({
   if (isLoading || screenState === 'loading') {
     return (
       <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
-        <CompactHeader title={t('quiz.title', 'Quiz')} onBackPress={onBack || (() => router.back())} />
+        <CompactHeader title={t('quiz.title', 'Quiz')} onBackPress={handleQuizBack} />
         <View style={styles.centerContainer}>
           <SkeletonCard />
         </View>
@@ -270,7 +354,7 @@ export const QuizScreen: React.FC<QuizScreenProps> = React.memo(({
   if (isError || totalQuestions === 0 || !currentQuestion) {
     return (
       <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
-        <CompactHeader title={t('quiz.title', 'Quiz')} onBackPress={onBack || (() => router.back())} />
+        <CompactHeader title={t('quiz.title', 'Quiz')} onBackPress={handleQuizBack} />
         <View style={styles.centerContainer}>
           <EmptyState
             icon={<BookOpen size={36} color={theme.textSecondary} />}
@@ -290,7 +374,7 @@ export const QuizScreen: React.FC<QuizScreenProps> = React.memo(({
 
       <CompactHeader
         title={t('quiz.title', 'Quiz')}
-        onBackPress={onBack || (() => router.back())}
+        onBackPress={handleQuizBack}
         showProgress={true}
         progressPercentage={progressPercentage}
         currentStep={screenState === 'completed' ? totalQuestions : currentIndex + 1}
@@ -302,7 +386,7 @@ export const QuizScreen: React.FC<QuizScreenProps> = React.memo(({
         style={styles.keyboardAvoid}
       >
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: spacing['2xl'] * 2 + insets.bottom }]}
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.tabletWrapper}>
@@ -317,6 +401,7 @@ export const QuizScreen: React.FC<QuizScreenProps> = React.memo(({
                           source={{ uri: currentQuestion.questionData.imageUrl }}
                           style={styles.quizImage}
                           resizeMode="contain"
+                          onError={(e) => console.warn('[QuizScreen] Image load failed:', e.nativeEvent?.error)}
                         />
                       </View>
                     )}
@@ -436,7 +521,14 @@ export const QuizScreen: React.FC<QuizScreenProps> = React.memo(({
                   <TouchableOpacity
                     style={[styles.feedbackCard, { backgroundColor: '#E8F5E9', borderColor: colors.success }]}
                     activeOpacity={0.8}
-                    onPress={() => ttsService.speak({ text: currentQuestion.correctAnswer, language: user?.targetLang || 'en' })}
+                     onPress={() => {
+                       const language = user?.targetLang || 'en';
+                       ttsService.speak({
+                         text: currentQuestion.correctAnswer,
+                         language,
+                         audioUrl: getQuizAnswerAudioUrl(currentQuestion, language),
+                       });
+                     }}
                   >
                     <CheckCircle2 size={24} color={colors.success} />
                     <View style={{ marginLeft: 8, flex: 1 }}>
@@ -452,7 +544,14 @@ export const QuizScreen: React.FC<QuizScreenProps> = React.memo(({
                   <TouchableOpacity
                     style={[styles.feedbackCard, { backgroundColor: '#FFEBEE', borderColor: colors.error }]}
                     activeOpacity={0.8}
-                    onPress={() => ttsService.speak({ text: currentQuestion.correctAnswer, language: user?.targetLang || 'en' })}
+                     onPress={() => {
+                       const language = user?.targetLang || 'en';
+                       ttsService.speak({
+                         text: currentQuestion.correctAnswer,
+                         language,
+                         audioUrl: getQuizAnswerAudioUrl(currentQuestion, language),
+                       });
+                     }}
                   >
                     <XCircle size={24} color={colors.error} />
                     <View style={{ marginLeft: 8, flex: 1 }}>

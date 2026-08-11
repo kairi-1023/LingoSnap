@@ -51,7 +51,7 @@ export const QuizView: React.FC<QuizViewProps> = React.memo(({ onCompleteQuizSte
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isChecked, setIsChecked] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [quizResults, setQuizResults] = useState<{ conceptId: string; rating: SrsRating }[]>([]);
+  const quizResultsRef = useRef<{ conceptId: string; rating: SrsRating }[]>([]);
 
   // Async Safety & Session Guard Refs
   const transitionLockRef = useRef(false);
@@ -95,8 +95,7 @@ export const QuizView: React.FC<QuizViewProps> = React.memo(({ onCompleteQuizSte
   const quizImageUrl = useMemo(() => {
     if (!currentQuiz?.word) return undefined;
     const wordTarget = currentQuiz.word.wordTarget || currentQuiz.word.conceptId || '';
-    const rawImage = (currentQuiz.word as any).imageUrl || undefined;
-    return getVocabularyImageUrl(wordTarget, rawImage);
+    return getVocabularyImageUrl(wordTarget);
   }, [currentQuiz?.word]);
 
   const handleNextQuestion = useCallback(async () => {
@@ -118,9 +117,9 @@ export const QuizView: React.FC<QuizViewProps> = React.memo(({ onCompleteQuizSte
       setIsSubmitting(true);
       try {
         if (user?.id) {
-          if (quizResults.length > 0) {
+          if (quizResultsRef.current.length > 0) {
             await Promise.all(
-              quizResults.map(res =>
+              quizResultsRef.current.map(res =>
                 studyService.updateWordSrsResult(user.id, res.conceptId, res.rating).catch(() => {})
               )
             );
@@ -135,7 +134,7 @@ export const QuizView: React.FC<QuizViewProps> = React.memo(({ onCompleteQuizSte
       }
       onCompleteQuizStep();
     }
-  }, [questionIndex, totalQuestions, quizResults, user?.id, onCompleteQuizStep]);
+  }, [questionIndex, totalQuestions, user?.id, onCompleteQuizStep]);
 
   const handleSelectOption = useCallback((index: number) => {
     if (isChecked || transitionLockRef.current) return;
@@ -146,7 +145,14 @@ export const QuizView: React.FC<QuizViewProps> = React.memo(({ onCompleteQuizSte
 
     const isCorrect = currentQuiz.options[index] === currentQuiz.correctAnswer;
     const targetLanguage = user?.targetLang || currentQuiz.word?.targetLang || 'en';
-    const audioUrl = parseTtsAudioUrl(currentQuiz.word?.ttsAudioUrl, targetLanguage, 'word');
+    const audioUrl = parseTtsAudioUrl(
+      currentQuiz.word?.ttsAudioUrl,
+      targetLanguage,
+      'word',
+      currentQuiz.word?.conceptId || currentQuiz.word?.id,
+      currentQuiz.word?.category,
+      currentQuiz.word?.difficultyLevel,
+    );
 
     // Safe progression helper with session ID guard (Targeting ~950ms total feedback visibility)
     const scheduleNextTransition = (delayMs: number) => {
@@ -195,7 +201,8 @@ export const QuizView: React.FC<QuizViewProps> = React.memo(({ onCompleteQuizSte
         ? slowResponse ? 'hard' : 'easy'
         : 'forgot';
       
-      setQuizResults(prev => [...prev, { conceptId, rating }]);
+      const result = { conceptId, rating };
+      quizResultsRef.current = [...quizResultsRef.current, result];
     }
   }, [isChecked, currentQuiz, user?.targetLang, user?.id, handleNextQuestion]);
 
@@ -276,6 +283,7 @@ export const QuizView: React.FC<QuizViewProps> = React.memo(({ onCompleteQuizSte
                   source={{ uri: quizImageUrl }}
                   style={styles.quizImage}
                   resizeMode="contain"
+                  onError={(e) => console.warn('[QuizView] Image load failed:', e.nativeEvent?.error)}
                 />
               </View>
             )}

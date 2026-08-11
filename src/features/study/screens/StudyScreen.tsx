@@ -9,8 +9,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { spacing, layout } from '../../../shared/theme/spacing';
-import { SegmentedControl, SegmentItem } from '../../../shared/components/SegmentedControl';
+import { layout } from '../../../shared/theme/spacing';
 import { BottomTabBar, TabType } from '../../../shared/components/BottomTabBar';
 import { TodayStudyView } from '../components/TodayStudyView';
 import { QuizView } from '../components/QuizView';
@@ -28,22 +27,9 @@ type StepState = 'word_learning' | 'quiz' | 'review' | 'dictionary' | 'completio
 
 import { ImageLessonScreen } from './ImageLessonScreen';
 
-export const StudyScreen: React.FC = React.memo(() => {
+const StudyHubScreen: React.FC = React.memo(() => {
   const router = useRouter();
   const params = useLocalSearchParams<{ tab?: StudySubTab; lessonId?: string }>();
-
-  if (params.lessonId) {
-    return (
-      <ImageLessonScreen
-        lessonId={params.lessonId}
-        onBack={() => {
-          if (router.canGoBack()) router.back();
-          else router.replace('/(tabs)');
-        }}
-        onNavigateToQuiz={() => router.push({ pathname: '/quiz', params: { lessonId: params.lessonId } })}
-      />
-    );
-  }
   const theme = useThemeStore((state) => state.theme);
   const { t } = useTranslation();
 
@@ -62,15 +48,6 @@ export const StudyScreen: React.FC = React.memo(() => {
         console.warn('[StudyScreen] Failed to get due review words:', err);
       });
   }, [user?.id, user?.nativeLang, user?.targetLang]);
-
-  const studySubTabs = React.useMemo<SegmentItem<StudySubTab>[]>(
-    () => [
-      { id: 'todays_study', label: t('study.learn') },
-      { id: 'review', label: t('study.review', { count: reviewCount }) },
-      { id: 'dictionary', label: t('study.dictionary') },
-    ],
-    [t, reviewCount]
-  );
 
   const handleSubTabChange = React.useCallback((tab: StudySubTab) => {
     setActiveSubTab(tab);
@@ -100,7 +77,6 @@ export const StudyScreen: React.FC = React.memo(() => {
     [router, handleSubTabChange]
   );
 
-  const handleCompleteStudyStep = React.useCallback(() => setStepState('quiz'), []);
   const handleCompleteQuizStep = React.useCallback(() => setStepState('completion'), []);
   const handleCompleteReview = React.useCallback(() => setStepState('completion'), []);
   const handleRestart = React.useCallback(() => {
@@ -130,9 +106,7 @@ export const StudyScreen: React.FC = React.memo(() => {
           {/* Main Active Step View Container */}
           <View style={styles.mainContent}>
             {stepState === 'word_learning' && (
-              <TodayStudyView
-                onCompleteStudyStep={handleCompleteStudyStep}
-              />
+              <TodayStudyView />
             )}
 
             {stepState === 'quiz' && (
@@ -164,6 +138,28 @@ export const StudyScreen: React.FC = React.memo(() => {
   );
 });
 
+StudyHubScreen.displayName = 'StudyHubScreen';
+
+export const StudyScreen: React.FC = React.memo(() => {
+  const router = useRouter();
+  const params = useLocalSearchParams<{ tab?: StudySubTab; lessonId?: string }>();
+
+  if (params.lessonId) {
+    return (
+      <ImageLessonScreen
+        lessonId={params.lessonId}
+        onBack={() => {
+          if (router.canGoBack()) router.back();
+          else router.replace('/(tabs)');
+        }}
+        onNavigateToQuiz={() => router.push({ pathname: '/quiz', params: { lessonId: params.lessonId } })}
+      />
+    );
+  }
+
+  return <StudyHubScreen />;
+});
+
 StudyScreen.displayName = 'StudyScreen';
 
 const styles = StyleSheet.create({
@@ -178,10 +174,6 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: layout.maxContentWidthTablet,
     alignSelf: 'center',
-  },
-  segmentedWrapper: {
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.xs,
   },
   mainContent: {
     flex: 1,

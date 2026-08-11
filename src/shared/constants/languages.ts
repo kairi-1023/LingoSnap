@@ -1,6 +1,7 @@
 export const SUPPORTED_LANGUAGES = [
   { code: 'ko', name: 'Korean', nativeName: '한국어', flag: '🇰🇷' },
   { code: 'en', name: 'English', nativeName: 'English', flag: '🇺🇸' },
+  { code: 'tl', name: 'Tagalog', nativeName: 'Tagalog', flag: '🇵🇭' },
 ] as const;
 
 export type SupportedLanguage = typeof SUPPORTED_LANGUAGES[number]['code'];

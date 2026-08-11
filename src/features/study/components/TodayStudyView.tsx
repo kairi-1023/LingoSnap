@@ -1,20 +1,15 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
+import { BookOpen } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { spacing } from '../../../shared/theme/spacing';
 import { Typography } from '../../../shared/components/Typography';
 import { SkeletonCard } from '../../../shared/components/Skeleton';
 import { EmptyState } from '../../../shared/components/EmptyState';
-import { useTranslation } from 'react-i18next';
 import { useHomeScreen } from '../../home/hooks/useHomeScreen';
 import { LessonCard } from '../../home/components/LessonCard';
 
-interface TodayStudyViewProps {
-  onCompleteStudyStep: () => void;
-}
-
-export const TodayStudyView: React.FC<TodayStudyViewProps> = React.memo(() => {
-  const { t } = useTranslation();
+export const TodayStudyView: React.FC = React.memo(() => {
   const insets = useSafeAreaInsets();
 
   const {
@@ -36,7 +31,7 @@ export const TodayStudyView: React.FC<TodayStudyViewProps> = React.memo(() => {
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.lessonSection}>
-        <Typography variant="h2" style={[styles.sectionHeaderTitle, { color: theme.textPrimary }]}>
+        <Typography variant="sectionTitle" style={[styles.sectionHeaderTitle, { color: theme.textPrimary }]}> 
           추천 레슨 (Recommended Lessons)
         </Typography>
         <Typography variant="body" color="textSecondary" style={{ marginBottom: spacing.md }}>
@@ -51,15 +46,17 @@ export const TodayStudyView: React.FC<TodayStudyViewProps> = React.memo(() => {
           </View>
         ) : isLessonsError ? (
           <EmptyState
+            icon={<BookOpen size={28} color={theme.textSecondary} />}
             title="레슨을 불러올 수 없습니다"
-            description="네트워크 연결 상태를 확인하고 다시 시도해 주세요."
+            subtitle="네트워크 연결 상태를 확인하고 다시 시도해 주세요."
             actionLabel="다시 시도"
             onAction={refetchLessons}
           />
         ) : lessons.length === 0 ? (
           <EmptyState
+            icon={<BookOpen size={28} color={theme.textSecondary} />}
             title="사용 가능한 레슨이 없습니다"
-            description="새로운 어휘 레슨이 준비 중입니다. 잠시 후 다시 확인해 주세요."
+            subtitle="새로운 어휘 레슨이 준비 중입니다. 잠시 후 다시 확인해 주세요."
             actionLabel="새로고침"
             onAction={refetchLessons}
           />

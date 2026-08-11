@@ -28,12 +28,11 @@ import { useStudyStore } from '../../../shared/stores/useStudyStore';
 import { useThemeStore } from '../../../shared/stores/useThemeStore';
 import { lessonService } from '../../../application/services/lessonService';
 import { progressService } from '../../../application/services/progressService';
-import { reviewService } from '../../../application/services/reviewService';
 import { studyService } from '../../../shared/services/studyService';
 import { ttsService } from '../../../shared/services/ttsService';
 import { saveStudiedWordToLocal } from '../../../shared/utils/studiedWordStorage';
 import { getVocabularyImageUrl } from '../../../shared/utils/vocabularyImageMap';
-import { parseTtsAudioUrl, buildTtsAudioUrlJson } from '../../../shared/utils/ttsStorage';
+import { parseTtsAudioUrl } from '../../../shared/utils/ttsStorage';
 import { WordEntity } from '../../../domain/entities/Word';
 import { LessonVocabulary } from '../../../domain/entities/LessonVocabulary';
 
@@ -129,7 +128,7 @@ export const ImageLessonScreen: React.FC<ImageLessonScreenProps> = React.memo(({
         retry: 'Retry',
         activeRecallToggle: 'Toggle Active Recall',
         playAudio: 'Play audio',
-        playSlowAudio: 'Play slow audio',
+        playSlowAudio: 'Play slow audio (0.75x)',
         toggleFavorite: 'Toggle favorite',
       };
     }
@@ -144,7 +143,7 @@ export const ImageLessonScreen: React.FC<ImageLessonScreenProps> = React.memo(({
       retry: '다시 시도',
       activeRecallToggle: 'Active Recall 모드 토글',
       playAudio: '정속 음성 들려주기',
-      playSlowAudio: '느린 음성 들려주기',
+        playSlowAudio: '느린 음성 (0.75x)',
       toggleFavorite: '즐겨찾기 토글',
     };
   }, [isEnglishUser]);
@@ -153,6 +152,7 @@ export const ImageLessonScreen: React.FC<ImageLessonScreenProps> = React.memo(({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
+  const [hasImageError, setHasImageError] = useState(false);
   const [isMeaningRevealed, setIsMeaningRevealed] = useState(false);
   const [enableActiveRecall, setEnableActiveRecall] = useState(true);
 
@@ -207,8 +207,7 @@ export const ImageLessonScreen: React.FC<ImageLessonScreenProps> = React.memo(({
       const word = vocab ? getLangField(vocab, 'word', targetLang) || vocab.conceptCode : 'Word';
       const wordEn = vocab ? getLangField(vocab, 'word', 'en') || word : word;
       const meaning = vocab ? getLangField(vocab, 'word', nativeLang) || 'Meaning' : 'Meaning';
-      const rawImage = vocab?.imageUrl || undefined;
-      const image_url = getVocabularyImageUrl(wordEn || vocab?.conceptCode || word, rawImage);
+      const image_url = getVocabularyImageUrl(wordEn || vocab?.conceptCode || word);
       const example_sentence = vocab ? getLangField(vocab, 'example', targetLang) : '';
       const example_native = vocab ? getLangField(vocab, 'example', nativeLang) : '';
       const rawPhonetic = vocab ? getLangField(vocab, 'phonetic', targetLang) || getLangField(vocab, 'phonetic', 'en') : undefined;
@@ -217,6 +216,10 @@ export const ImageLessonScreen: React.FC<ImageLessonScreenProps> = React.memo(({
 
       return {
         id: item.vocabularyId || item.id,
+        vocabularyId: item.vocabularyId,
+        conceptCode: vocab?.conceptCode,
+        category: vocab?.category,
+        difficultyLevel: vocab?.difficultyLevel,
         word,
         meaning,
         image_url,
@@ -233,30 +236,37 @@ export const ImageLessonScreen: React.FC<ImageLessonScreenProps> = React.memo(({
   const isLastWord = currentIndex === totalCount - 1;
 
   // Audio Playback Helpers
-  const handlePlayAudio = useCallback((text?: string, rate = 0.9, type: 'word' | 'example' = 'word') => {
+  const handlePlayAudio = useCallback((text?: string, rate = 1.0, type: 'word' | 'example' = 'word', forceTts = false) => {
     if (!text) return;
-    const conceptCode = (currentVocab as any)?.conceptCode || currentVocab?.word;
-    const category = (currentVocab as any)?.category || 'greetings';
-    const difficulty = (currentVocab as any)?.difficultyLevel || 'beginner';
+    const conceptCode = currentVocab?.conceptCode || currentVocab?.word;
+    const category = currentVocab?.category || 'greetings';
+    const difficulty = currentVocab?.difficultyLevel || 'beginner';
 
     const rawAudioUrl = parseTtsAudioUrl(currentVocab?.tts_audio_url, targetLang, type, conceptCode, category, difficulty) || undefined;
-    // For examples, always use real-time speech engine reading to guarantee 100% text-audio exact match
-    const audioUrl = type === 'example' ? undefined : rawAudioUrl;
     ttsService.speak({
       text,
       language: targetLang,
-      audioUrl,
+      audioUrl: rawAudioUrl,
       rate,
+      forceTts,
     });
   }, [targetLang, currentVocab]);
 
   const handlePlaySlowAudio = useCallback((text?: string, type: 'word' | 'example' = 'word') => {
-    handlePlayAudio(text, 0.55, type);
-  }, [handlePlayAudio]);
+    if (!text) return;
+    const conceptCode = currentVocab?.conceptCode || currentVocab?.word;
+    const category = currentVocab?.category || 'greetings';
+    const difficulty = currentVocab?.difficultyLevel || 'beginner';
+
+    const slowType = type === 'word' ? 'word_slow' : 'example_slow' as const;
+    const rawAudioUrl = parseTtsAudioUrl(currentVocab?.tts_audio_url, targetLang, slowType, conceptCode, category, difficulty) || undefined;
+    ttsService.speak({ text, language: targetLang, audioUrl: rawAudioUrl, rate: 1.0 });
+  }, [targetLang, currentVocab]);
 
   // Image prefetching
   useEffect(() => {
     setIsImageLoaded(false);
+    setHasImageError(false);
     setIsMeaningRevealed(false);
     if (currentVocab?.image_url) {
       Image.prefetch(currentVocab.image_url).catch(() => {});
@@ -269,6 +279,8 @@ export const ImageLessonScreen: React.FC<ImageLessonScreenProps> = React.memo(({
 
   // Single Auto Audio Playback Guard: Guarantees 1-time audio playback per word index
   useEffect(() => {
+    // Browsers reject audio started from an effect without a user gesture.
+    if (Platform.OS === 'web') return;
     if (hasPlayedAudioRef.current === currentIndex) return;
     if (!currentVocab?.word) return;
 
@@ -277,7 +289,7 @@ export const ImageLessonScreen: React.FC<ImageLessonScreenProps> = React.memo(({
       if (hasPlayedAudioRef.current !== currentIndex) {
         hasPlayedAudioRef.current = currentIndex;
         try {
-          handlePlayAudio(currentVocab.word, 0.9);
+          handlePlayAudio(currentVocab.word, 1.0);
         } catch (_err) {
           // Silent catch for browser autoplay restrictions before user gesture
         }
@@ -318,10 +330,6 @@ export const ImageLessonScreen: React.FC<ImageLessonScreenProps> = React.memo(({
       };
 
       saveStudiedWordToLocal(userId, wordEntity);
-      if (user?.id) {
-        const targetVocabId = currentVocab.vocabularyId || currentVocab.id;
-        reviewService.upsertReviewItem(user.id, targetVocabId, 'easy').catch(() => {});
-      }
     }
   }, [currentIndex, currentVocab, user?.id, nativeLang, targetLang]);
 
@@ -340,10 +348,23 @@ export const ImageLessonScreen: React.FC<ImageLessonScreenProps> = React.memo(({
             await lessonService.markLessonComplete(lessonId);
             await progressService.updateLessonProgress(user.id, lessonId, 100);
 
-            lessonVocabularies.forEach((vocabItem) => {
-              const targetVocabId = vocabItem.vocabularyId || vocabItem.id;
-              reviewService.upsertReviewItem(user.id, targetVocabId, 'easy').catch(() => {});
-            });
+            useStudyStore.getState().setTodayWords(
+              lessonVocabularies.map((vocabItem): WordEntity => ({
+                id: vocabItem.vocabularyId || vocabItem.id,
+                conceptId: vocabItem.vocabularyId || vocabItem.id,
+                wordTarget: vocabItem.word,
+                wordNative: vocabItem.meaning,
+                phonetic: vocabItem.phonetic || null,
+                exampleSentence: vocabItem.example_sentence || null,
+                exampleTarget: vocabItem.example_sentence || null,
+                exampleNative: vocabItem.example_native || null,
+                category: vocabItem.category || 'daily',
+                isReview: false,
+                createdAt: new Date().toISOString(),
+                nativeLang,
+                targetLang,
+              }))
+            );
           }
           await studyService.finishStudySession(user.id);
         }
@@ -362,7 +383,7 @@ export const ImageLessonScreen: React.FC<ImageLessonScreenProps> = React.memo(({
         }
       }
     }
-  }, [isLastWord, isSubmitting, user?.id, lessonId, onNavigateToQuiz, router]);
+  }, [isLastWord, isSubmitting, user?.id, lessonId, lessonVocabularies, nativeLang, targetLang, onNavigateToQuiz, router]);
 
   const handleMainButtonClick = useCallback(() => {
     if (enableActiveRecall && !isMeaningRevealed) {
@@ -444,12 +465,23 @@ export const ImageLessonScreen: React.FC<ImageLessonScreenProps> = React.memo(({
         <View style={styles.responsiveContainer}>
           {/* 1. Situation Image Viewport Anchor */}
           <View style={[styles.situationViewport, { height: imageHeight, backgroundColor: '#FFFFFF', borderColor: theme.border }]}>
-            <Image
-              source={{ uri: currentVocab.image_url }}
-              style={styles.situationImage}
-              resizeMode="contain"
-              onLoadEnd={() => setIsImageLoaded(true)}
-            />
+            {currentVocab.image_url && !hasImageError ? (
+              <Image
+                source={{ uri: currentVocab.image_url }}
+                style={styles.situationImage}
+                resizeMode="contain"
+                onLoadEnd={() => setIsImageLoaded(true)}
+                onError={() => { setHasImageError(true); setIsImageLoaded(true); }}
+              />
+            ) : (
+              <View style={styles.noImageContainer}>
+                {hasImageError && (
+                  <Typography variant="caption" color="textSecondary" align="center">
+                    {isEnglishUser ? 'Image not available' : '이미지가 없습니다'}
+                  </Typography>
+                )}
+              </View>
+            )}
           </View>
 
           {/* 2. Hybrid Center Flow Stage Canvas */}
@@ -529,7 +561,7 @@ export const ImageLessonScreen: React.FC<ImageLessonScreenProps> = React.memo(({
               {/* Normal Speed TTS */}
               <TouchableOpacity
                 style={[styles.mainChipButton, { backgroundColor: theme.paperBg, borderColor: theme.paperBorder }]}
-                onPress={() => handlePlayAudio(currentVocab.word, 0.9)}
+                onPress={() => handlePlayAudio(currentVocab.word, 1.0)}
                 activeOpacity={0.7}
                 accessibilityLabel={uiText.playAudio}
                 accessibilityRole="button"
@@ -576,7 +608,7 @@ export const ImageLessonScreen: React.FC<ImageLessonScreenProps> = React.memo(({
                   <View style={styles.sentenceAudioGroup}>
                     <TouchableOpacity
                       style={[styles.smallChipButton, { backgroundColor: theme.paperBg, borderColor: theme.paperBorder }]}
-                      onPress={() => handlePlayAudio(currentVocab.example_sentence, 0.9, 'example')}
+                      onPress={() => handlePlayAudio(currentVocab.example_sentence, 1.0, 'example')}
                       activeOpacity={0.7}
                       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                       accessibilityLabel={uiText.playAudio}
@@ -691,6 +723,12 @@ const styles = StyleSheet.create({
   situationImage: {
     width: '100%',
     height: '100%',
+  },
+  noImageContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
   },
   contentCanvas: {
     width: '100%',

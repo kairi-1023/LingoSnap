@@ -97,6 +97,7 @@ const openOAuthUrl = async (url: string, redirectTo: string) => {
 const normalizeLangName = (lang: string | null | undefined, defaultCode: SupportedLanguage): SupportedLanguage => {
   if (!lang) return defaultCode;
   const lower = lang.toLowerCase().trim();
+  if (lower === 'tl' || lower === 'tagalog' || lower === 'filipino') return 'tl';
   if (lower === 'ko' || lower === 'korean') return 'ko';
   if (lower === 'en' || lower === 'english') return 'en';
   return defaultCode;
@@ -105,6 +106,7 @@ const normalizeLangName = (lang: string | null | undefined, defaultCode: Support
 const langToCode = (lang: string | null | undefined): SupportedLanguage | null => {
   if (!lang) return null;
   const lower = lang.toLowerCase().trim();
+  if (lower === 'tl' || lower === 'tagalog' || lower === 'filipino') return 'tl';
   if (lower === 'ko' || lower === 'korean') return 'ko';
   if (lower === 'en' || lower === 'english') return 'en';
   return 'en';

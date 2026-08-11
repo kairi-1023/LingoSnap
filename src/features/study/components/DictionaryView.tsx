@@ -92,7 +92,14 @@ export const DictionaryView: React.FC = React.memo(() => {
   const handleAudioPlay = (word: WordEntity) => {
     setPlayingId(word.id);
     const targetLanguage = user?.targetLang || word.targetLang || 'en';
-    const audioUrl = parseTtsAudioUrl(word.ttsAudioUrl, targetLanguage, 'word');
+    const audioUrl = parseTtsAudioUrl(
+      word.ttsAudioUrl,
+      targetLanguage,
+      'word',
+      word.conceptId || word.id,
+      word.category,
+      word.difficultyLevel,
+    );
     ttsService.speak({
       text: word.wordTarget,
       language: targetLanguage,

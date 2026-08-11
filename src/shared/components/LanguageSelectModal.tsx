@@ -16,10 +16,12 @@ import { SUPPORTED_LANGUAGES, getLanguageInfo, LanguageInfo } from '../utils/lan
 
 import EnFlag from '../../../assets/images/flags/en.svg';
 import KoFlag from '../../../assets/images/flags/ko.svg';
+import TlFlag from '../../../assets/images/flags/tl.svg';
 
 const FLAG_SVG_MAP: Record<string, React.ElementType> = {
   en: EnFlag,
   ko: KoFlag,
+  tl: TlFlag,
 };
 
 export interface LanguageSelectModalProps {

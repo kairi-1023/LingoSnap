@@ -51,6 +51,7 @@ export interface SpeakOptions {
   language?: string;
   audioUrl?: string | null;
   rate?: number;
+  forceTts?: boolean;
   onEnd?: () => void;
   onError?: (error: Error) => void;
 }
@@ -97,7 +98,7 @@ export class TTSService {
     const requestId = ++this.currentRequestId;
     this.stop();
 
-    const { text, language, audioUrl, rate, onEnd, onError } = options;
+    const { text, language, audioUrl, rate, forceTts, onEnd, onError } = options;
     if (!text) {
       onEnd?.();
       return;
@@ -105,7 +106,7 @@ export class TTSService {
 
     const langTag = this.normalizeLanguage(language);
 
-    if (audioUrl) {
+    if (audioUrl && !forceTts) {
       try {
         console.log(`[TTSService] ▶ Playing MP3 (${rate ? `${rate}x` : '1.0x'}): ${audioUrl.split('/').pop()}`);
         await this.playAudioUrl(audioUrl, rate, onEnd, onError);
@@ -123,7 +124,7 @@ export class TTSService {
       return;
     }
 
-    const sourceLabel = audioUrl ? 'expo-speech (fallback)' : 'expo-speech (no MP3)';
+    const sourceLabel = forceTts ? 'expo-speech (slow mode)' : audioUrl ? 'expo-speech (fallback)' : 'expo-speech (no MP3)';
     console.log(`[TTSService] ▶ Playing ${sourceLabel}: "${text.slice(0, 30)}..." (${langTag}) [rate=${rate || 1.0}]`);
     this.playExpoSpeech(text, langTag, rate, onEnd, onError);
   }
@@ -181,9 +182,9 @@ export class TTSService {
               return;
             }
             if (playErr?.name === 'NotAllowedError' || errStr.includes("user didn't interact") || errStr.includes('NotAllowedError')) {
-              // Web browser autoplay policy restriction (user interaction required); resolve gracefully
+              // Let speakInternal invoke the native speech fallback.
               this.cleanupPlayer();
-              resolve();
+              reject(playErr instanceof Error ? playErr : new Error('Audio playback requires user interaction'));
               return;
             }
             console.warn('[TTSService] player.play() error:', playErr);

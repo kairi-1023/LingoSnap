@@ -34,7 +34,7 @@ export const ExampleSentenceSection: React.FC<ExampleSentenceSectionProps> = Rea
   const { theme } = useThemeStore();
   const defaultNoExample = t ? t('study.noExampleSentence') : 'No example sentence';
   const playAccessibilityLabel = t ? t('study.playExamplePronunciation') : 'Play example audio';
-  const playSlowAccessibilityLabel = t ? t('study.playExampleSlowly', 'Play example slowly (0.85x)') : 'Play example slowly (0.85x)';
+  const playSlowAccessibilityLabel = t ? t('study.playExampleSlowly', 'Play example slowly (0.75x)') : 'Play example slowly (0.75x)';
 
   const handleNormal = onPlayExampleNormal || onPlayExample || (() => {});
   const handleSlow = onPlayExampleSlow || (() => {});

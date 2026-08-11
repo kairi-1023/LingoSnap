@@ -51,9 +51,17 @@ function isValidUuid(id?: string | null): boolean {
 
 let isReviewTableAvailable = true;
 
+async function canAccessReviewTable(userId: string): Promise<boolean> {
+  if (!isReviewTableAvailable) return false;
+  if (!isValidUuid(userId)) return false;
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return false;
+  return session.user.id === userId;
+}
+
 export class AIReviewRepository implements IAIReviewRepository {
   async getDueReviewItems(userId: string, limit = 20): Promise<AIReviewItemEntity[]> {
-    if (!isReviewTableAvailable || !isValidUuid(userId)) return [];
+    if (!(await canAccessReviewTable(userId))) return [];
     const now = new Date().toISOString();
     try {
       const { data, error } = await supabase
@@ -77,7 +85,7 @@ export class AIReviewRepository implements IAIReviewRepository {
   }
 
   async getReviewItem(userId: string, vocabularyId: string): Promise<AIReviewItemEntity | null> {
-    if (!isReviewTableAvailable || !isValidUuid(userId) || !isValidUuid(vocabularyId)) return null;
+    if (!(await canAccessReviewTable(userId)) || !isValidUuid(vocabularyId)) return null;
     const targetVocabId = vocabularyId.includes('_') ? vocabularyId.split('_').pop() || vocabularyId : vocabularyId;
     try {
       const { data, error } = await supabase
@@ -100,7 +108,7 @@ export class AIReviewRepository implements IAIReviewRepository {
   async upsertReviewItem(userId: string, vocabularyId: string, rating: SrsReviewRating): Promise<AIReviewItemEntity> {
     const now = new Date().toISOString();
     const targetVocabId = vocabularyId.includes('_') ? vocabularyId.split('_').pop() || vocabularyId : vocabularyId;
-    if (isReviewTableAvailable && isValidUuid(userId) && isValidUuid(targetVocabId)) {
+    if (isReviewTableAvailable && isValidUuid(userId) && isValidUuid(targetVocabId) && (await canAccessReviewTable(userId))) {
       try {
         const existing = await this.getReviewItem(userId, targetVocabId);
         const currentStage = existing?.srsStage || 1;
@@ -130,6 +138,10 @@ export class AIReviewRepository implements IAIReviewRepository {
             .maybeSingle();
 
           if (!error && data) return mapRowToReviewEntity(data);
+          if (error) {
+            isReviewTableAvailable = false;
+            console.warn('[aiReviewRepository] Review item update failed:', error.message, error.code);
+          }
         } else {
           const { data, error } = await supabase
             .from('ai_review_items')
@@ -138,6 +150,10 @@ export class AIReviewRepository implements IAIReviewRepository {
             .maybeSingle();
 
           if (!error && data) return mapRowToReviewEntity(data);
+          if (error) {
+            isReviewTableAvailable = false;
+            console.warn('[aiReviewRepository] Review item insert failed:', error.message, error.code);
+          }
           if (error && error.code === '23505') {
             const { data: updateData } = await supabase
               .from('ai_review_items')
@@ -168,7 +184,7 @@ export class AIReviewRepository implements IAIReviewRepository {
   }
 
   async getUserReviewStats(userId: string): Promise<{ total: number; dueToday: number; mastered: number }> {
-    if (!isReviewTableAvailable || !isValidUuid(userId)) return { total: 0, dueToday: 0, mastered: 0 };
+    if (!(await canAccessReviewTable(userId))) return { total: 0, dueToday: 0, mastered: 0 };
     const now = new Date().toISOString();
     try {
       const { data, error } = await supabase

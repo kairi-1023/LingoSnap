@@ -84,6 +84,7 @@ async function fetchVocabulariesByIdsOrConcepts(rawIds: string[], categoryFilter
 // Helper: Map language names/codes to standard 2-letter ISO codes (ko, en only)
 const getStandardLangCode = (lang: string): string => {
   const norm = (lang || '').toLowerCase().trim();
+  if (norm.startsWith('tl') || norm.includes('tagalog') || norm.includes('filipino')) return 'tl';
   if (norm.startsWith('ko') || norm.includes('korean')) return 'ko';
   if (norm.startsWith('en') || norm.includes('english')) return 'en';
   return 'en';
@@ -94,8 +95,9 @@ function getIsKoreanTarget(targetLang: string): boolean {
   return norm === 'ko' || norm === 'korean';
 }
 
-function getIsTagalogTarget(_targetLang: string): boolean {
-  return false;
+function getIsTagalogTarget(targetLang: string): boolean {
+  const norm = (targetLang || '').toLowerCase().trim();
+  return norm === 'tl' || norm === 'tagalog' || norm === 'filipino';
 }
 
 function buildFallbackWord(shortId: string, targetLang: string, nativeLang: string, now: string): WordEntity | null {

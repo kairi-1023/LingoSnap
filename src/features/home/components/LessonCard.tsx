@@ -26,7 +26,7 @@ export const LessonCard: React.FC<LessonCardProps> = React.memo(({
 }) => {
   const displayLanguage = useSettingsStore((state) => state.displayLanguage);
   const isCompleted = !!lesson.completedAt || progressPercent >= 100;
-  const imageUrl = getVocabularyImageUrl(lesson.titleEn || lesson.title || 'family', lesson.imageUrl);
+  const imageUrl = getVocabularyImageUrl(lesson.titleEn || lesson.title || 'family');
 
   const cardTitle = displayLanguage === 'ko' ? (lesson.titleKo || lesson.title) : (lesson.titleEn || lesson.title);
   const cardDescription = displayLanguage === 'ko' ? (lesson.descriptionKo || lesson.description) : (lesson.descriptionEn || lesson.description);
@@ -41,7 +41,12 @@ export const LessonCard: React.FC<LessonCardProps> = React.memo(({
       onPress={() => onSelectLesson(lesson.id)}
     >
       <View style={[styles.imageWrapper, { backgroundColor: theme.surfaceHighlight }]}>
-        <Image source={{ uri: imageUrl }} style={styles.cardImage} resizeMode="contain" />
+        <Image
+          source={imageUrl ? { uri: imageUrl } : undefined}
+          style={styles.cardImage}
+          resizeMode="contain"
+          onError={(e) => console.warn('[LessonCard] Image load failed:', e.nativeEvent?.error)}
+        />
         {isCompleted && (
           <View style={[styles.completedBadge, { backgroundColor: theme.successBg }]}>
             <CheckCircle size={14} color={colors.primary} />

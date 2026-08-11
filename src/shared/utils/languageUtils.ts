@@ -9,6 +9,7 @@ export interface LanguageInfo {
 export const SUPPORTED_LANGUAGES: LanguageInfo[] = [
   { code: 'ko', name: 'Korean', nativeName: '한국어', flag: '🇰🇷', shortCode: 'KO' },
   { code: 'en', name: 'English', nativeName: 'English', flag: '🇺🇸', shortCode: 'EN' },
+  { code: 'tl', name: 'Tagalog', nativeName: 'Tagalog', flag: '🇵🇭', shortCode: 'TL' },
 ];
 
 /**
@@ -33,6 +34,8 @@ export const getLanguageInfo = (langInput?: string): LanguageInfo => {
   // Fallback mappings
   if (lower.includes('korea')) return SUPPORTED_LANGUAGES[0];
   if (lower.includes('eng')) return SUPPORTED_LANGUAGES[1];
+  if (lower.includes('taga') || lower.includes('fili') || lower.includes('phili'))
+    return SUPPORTED_LANGUAGES[2];
 
   return {
     code: lower.substring(0, 2),

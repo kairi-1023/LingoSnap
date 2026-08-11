@@ -68,7 +68,14 @@ export const StudyWordCard: React.FC<StudyWordCardProps> = React.memo(({
     setIsPlayingAudioSlow(false);
     setIsPlayingAudioNormal(true);
     const targetLanguage = user?.targetLang || word.targetLang || 'en';
-    const audioUrl = parseTtsAudioUrl(word.ttsAudioUrl, targetLanguage, 'word');
+    const audioUrl = parseTtsAudioUrl(
+      word.ttsAudioUrl,
+      targetLanguage,
+      'word',
+      word.conceptId || word.id,
+      word.category,
+      word.difficultyLevel,
+    );
     ttsService.speak({
       text: word.wordTarget,
       language: targetLanguage,
@@ -85,12 +92,19 @@ export const StudyWordCard: React.FC<StudyWordCardProps> = React.memo(({
     setIsPlayingAudioNormal(false);
     setIsPlayingAudioSlow(true);
     const targetLanguage = user?.targetLang || word.targetLang || 'en';
-    const audioUrl = parseTtsAudioUrl(word.ttsAudioUrl, targetLanguage, 'word');
+    const audioUrl = parseTtsAudioUrl(
+      word.ttsAudioUrl,
+      targetLanguage,
+      'word_slow',
+      word.conceptId || word.id,
+      word.category,
+      word.difficultyLevel,
+    );
     ttsService.speak({
       text: word.wordTarget,
       language: targetLanguage,
       audioUrl,
-      rate: 0.75,
+      rate: 1.0,
       onEnd: () => setIsPlayingAudioSlow(false),
       onError: () => setIsPlayingAudioSlow(false),
     });
@@ -106,7 +120,14 @@ export const StudyWordCard: React.FC<StudyWordCardProps> = React.memo(({
     setIsPlayingExampleSlow(false);
     setIsPlayingExampleNormal(true);
     const targetLanguage = user?.targetLang || word.targetLang || 'en';
-    const audioUrl = parseTtsAudioUrl(word.ttsAudioUrl, targetLanguage, 'example');
+    const audioUrl = parseTtsAudioUrl(
+      word.ttsAudioUrl,
+      targetLanguage,
+      'example',
+      word.conceptId || word.id,
+      word.category,
+      word.difficultyLevel,
+    );
     ttsService.speak({
       text: sentenceText,
       language: targetLanguage,
@@ -124,12 +145,19 @@ export const StudyWordCard: React.FC<StudyWordCardProps> = React.memo(({
     setIsPlayingExampleNormal(false);
     setIsPlayingExampleSlow(true);
     const targetLanguage = user?.targetLang || word.targetLang || 'en';
-    const audioUrl = parseTtsAudioUrl(word.ttsAudioUrl, targetLanguage, 'example');
+    const audioUrl = parseTtsAudioUrl(
+      word.ttsAudioUrl,
+      targetLanguage,
+      'example_slow',
+      word.conceptId || word.id,
+      word.category,
+      word.difficultyLevel,
+    );
     ttsService.speak({
       text: sentenceText,
       language: targetLanguage,
       audioUrl,
-      rate: 0.75,
+      rate: 1.0,
       onEnd: () => setIsPlayingExampleSlow(false),
       onError: () => setIsPlayingExampleSlow(false),
     });
@@ -252,7 +280,7 @@ export const StudyWordCard: React.FC<StudyWordCardProps> = React.memo(({
             ]}
             activeOpacity={0.7}
             onPress={handleSlowAudioPlay}
-            accessibilityLabel={t ? t('study.slowMode', 'Play slowly (0.85x)') : 'Play slowly (0.85x)'}
+            accessibilityLabel={t ? t('study.slowMode', 'Play slowly (0.75x)') : 'Play slowly (0.75x)'}
             accessibilityRole="button"
             hitSlop={{ top: 8, bottom: 8, left: 4, right: 8 }}
           >

@@ -1,12 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-  ScrollView,
-  Platform,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import Animated, {
   useSharedValue,
@@ -44,7 +37,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({ onCompleteReview }) => {
   const favoritesMap = useStudyStore((state) => state.favoritesMap);
   const setFavoritesMap = useStudyStore((state) => state.setFavoritesMap);
   const setFavoriteStatus = useStudyStore((state) => state.setFavoriteStatus);
-  const { isDarkMode, theme } = useThemeStore();
+  const { theme } = useThemeStore();
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [reviewList, setReviewList] = useState<WordEntity[]>([]);
@@ -53,6 +46,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({ onCompleteReview }) => {
   const [isPlayingExampleNormal, setIsPlayingExampleNormal] = useState(false);
   const [isPlayingExampleSlow, setIsPlayingExampleSlow] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isRating, setIsRating] = useState(false);
 
   // Card opacity animation for fast interaction
   const cardOpacity = useSharedValue(1);
@@ -68,6 +62,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({ onCompleteReview }) => {
 
   useEffect(() => {
     async function loadReviewWords() {
+      isMountedRef.current = true;
       setIsLoading(true);
       try {
         const words = await studyService.getDueReviewWords(user?.id, user?.nativeLang, user?.targetLang);
@@ -96,9 +91,9 @@ export const ReviewView: React.FC<ReviewViewProps> = ({ onCompleteReview }) => {
 
     loadReviewWords();
     return () => {
-      isMountedRef.current = false;
+      // The mount cleanup owns the shared mounted flag.
     };
-  }, [user?.id, setFavoritesMap]);
+  }, [user?.id, user?.nativeLang, user?.targetLang, setFavoritesMap]);
 
   const currentItem = reviewList[currentIndex];
   const activeCount = reviewList.length || 1;
@@ -129,7 +124,14 @@ export const ReviewView: React.FC<ReviewViewProps> = ({ onCompleteReview }) => {
     setIsPlayingExampleSlow(false);
     setIsPlayingAudio(true);
     const targetLanguage = user?.targetLang || currentItem.targetLang || 'en';
-    const audioUrl = parseTtsAudioUrl(currentItem.ttsAudioUrl, targetLanguage, 'word');
+    const audioUrl = parseTtsAudioUrl(
+      currentItem.ttsAudioUrl,
+      targetLanguage,
+      'word',
+      currentItem.conceptId || currentItem.id,
+      currentItem.category,
+      currentItem.difficultyLevel,
+    );
     ttsService.speak({
       text: currentItem.wordTarget,
       language: targetLanguage,
@@ -147,8 +149,15 @@ export const ReviewView: React.FC<ReviewViewProps> = ({ onCompleteReview }) => {
     setIsPlayingAudio(false);
     setIsPlayingExampleSlow(false);
     setIsPlayingExampleNormal(true);
-    const targetLanguage = user?.targetLang || currentItem.targetLang || 'example';
-    const audioUrl = parseTtsAudioUrl(currentItem.ttsAudioUrl, targetLanguage, 'example');
+    const targetLanguage = user?.targetLang || currentItem.targetLang || 'en';
+    const audioUrl = parseTtsAudioUrl(
+      currentItem.ttsAudioUrl,
+      targetLanguage,
+      'example',
+      currentItem.conceptId || currentItem.id,
+      currentItem.category,
+      currentItem.difficultyLevel,
+    );
     ttsService.speak({
       text: sentenceText,
       language: targetLanguage,
@@ -164,19 +173,28 @@ export const ReviewView: React.FC<ReviewViewProps> = ({ onCompleteReview }) => {
     setIsPlayingAudio(false);
     setIsPlayingExampleNormal(false);
     setIsPlayingExampleSlow(true);
-    const targetLanguage = user?.targetLang || currentItem.targetLang || 'example';
-    const audioUrl = parseTtsAudioUrl(currentItem.ttsAudioUrl, targetLanguage, 'example');
+    const targetLanguage = user?.targetLang || currentItem.targetLang || 'en';
+    const audioUrl = parseTtsAudioUrl(
+      currentItem.ttsAudioUrl,
+      targetLanguage,
+      'example_slow',
+      currentItem.conceptId || currentItem.id,
+      currentItem.category,
+      currentItem.difficultyLevel,
+    );
     ttsService.speak({
       text: sentenceText,
       language: targetLanguage,
       audioUrl,
-      rate: 0.85,
+      rate: 1.0,
       onEnd: () => setIsPlayingExampleSlow(false),
       onError: () => setIsPlayingExampleSlow(false),
     });
   };
 
-  const handleRatingAction = (rating: SrsRating) => {
+  const handleRatingAction = async (rating: SrsRating) => {
+    if (isRating) return;
+    setIsRating(true);
     // Fast interaction feedback animation
     cardOpacity.value = withTiming(0.4, { duration: 100 }, () => {
       cardOpacity.value = withTiming(1, { duration: 150 });
@@ -186,11 +204,11 @@ export const ReviewView: React.FC<ReviewViewProps> = ({ onCompleteReview }) => {
 
     // Record SRS spaced repetition result in background with 3-stage rating
     if (user?.id && (currentItem.conceptId || currentItem.id)) {
-      studyService
-        .updateWordSrsResult(user.id, currentItem.conceptId || currentItem.id, rating)
-        .catch((err) => {
-          console.warn('[ReviewView] Failed to update SRS result:', err);
-        });
+      try {
+        await studyService.updateWordSrsResult(user.id, currentItem.conceptId || currentItem.id, rating);
+      } catch (err) {
+        console.warn('[ReviewView] Failed to update SRS result:', err);
+      }
     }
 
     if (currentIndex < reviewList.length - 1) {
@@ -199,6 +217,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({ onCompleteReview }) => {
     } else {
       onCompleteReview();
     }
+    if (isMountedRef.current) setIsRating(false);
   };
 
   const animatedCardStyle = useAnimatedStyle(() => ({
@@ -319,6 +338,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({ onCompleteReview }) => {
                   },
                 ]}
                 activeOpacity={0.8}
+                disabled={isRating}
                 onPress={() => handleRatingAction('forgot')}
               >
                 <Typography variant="caption" style={{ fontWeight: '700', color: theme.textPrimary }}>
@@ -335,6 +355,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({ onCompleteReview }) => {
                   },
                 ]}
                 activeOpacity={0.8}
+                disabled={isRating}
                 onPress={() => handleRatingAction('hard')}
               >
                 <Typography variant="caption" style={{ fontWeight: '700', color: theme.warningText }}>
@@ -351,6 +372,7 @@ export const ReviewView: React.FC<ReviewViewProps> = ({ onCompleteReview }) => {
                   },
                 ]}
                 activeOpacity={0.8}
+                disabled={isRating}
                 onPress={() => handleRatingAction('easy')}
               >
                 <Typography variant="caption" style={{ fontWeight: '700', color: colors.primary }}>

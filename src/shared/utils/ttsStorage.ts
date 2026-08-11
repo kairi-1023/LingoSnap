@@ -45,6 +45,7 @@ export interface TtsUrlMap {
 export function normalizeLanguageCode(lang?: string | null): string {
   const norm = (lang || '').toLowerCase().trim();
   if (!norm) return 'en';
+  if (norm.startsWith('tl') || norm.includes('tagalog') || norm.includes('fil') || norm.includes('ph')) return 'tl';
   if (norm.startsWith('ko') || norm.includes('korean') || norm.includes('kr')) return 'ko';
   if (norm.startsWith('en') || norm.includes('english') || norm.includes('us')) return 'en';
   return norm.split(/[-_]/)[0];
@@ -58,14 +59,16 @@ export function buildTtsAudioUrlJson(conceptCode?: string | null, category?: str
   const cat = (category || 'general').toLowerCase().trim();
   const diff = (difficulty || 'beginner').toLowerCase().trim();
 
-  const langs = ['en', 'ko'];
-  const map: Record<string, { word: string; example: string }> = {};
+  const langs = ['en', 'ko', 'tl'];
+  const suffixes = ['word', 'example', 'word_slow', 'example_slow'];
+  const map: Record<string, Record<string, string>> = {};
 
   langs.forEach((lang) => {
-    map[lang] = {
-      word: `${STORAGE_BASE}/${cat}/${diff}/${concept}_${lang}_word.mp3`,
-      example: `${STORAGE_BASE}/${cat}/${diff}/${concept}_${lang}_example.mp3`,
-    };
+    const langMap: Record<string, string> = {};
+    suffixes.forEach((suffix) => {
+      langMap[suffix] = `${STORAGE_BASE}/${cat}/${diff}/${concept}_${lang}_${suffix}.mp3`;
+    });
+    map[lang] = langMap;
   });
 
   return JSON.stringify(map);
@@ -74,7 +77,7 @@ export function buildTtsAudioUrlJson(conceptCode?: string | null, category?: str
 export function parseTtsAudioUrl(
   ttsAudioUrl: string | null | undefined,
   language: string,
-  type: 'word' | 'example' = 'word',
+  type: 'word' | 'example' | 'word_slow' | 'example_slow' = 'word',
   conceptCode?: string | null,
   category?: string | null,
   difficulty?: string | null,
@@ -97,9 +100,9 @@ export function parseTtsAudioUrl(
   let trimmed = ttsAudioUrl.trim();
   if (!trimmed) return buildFallback();
 
-  // 1. Direct single MP3 URL
+  // 1. Use a direct URL only when its filename matches the requested type.
   if ((trimmed.startsWith('http://') || trimmed.startsWith('https://')) && trimmed.endsWith('.mp3')) {
-    return trimmed;
+    return trimmed.endsWith(`_${type}.mp3`) ? trimmed : buildFallback();
   }
 
   // 2. Parse JSON (Support double-stringified JSON)
@@ -113,12 +116,7 @@ export function parseTtsAudioUrl(
     map = null;
   }
 
-  if (!map || typeof map !== 'object') {
-    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
-      return trimmed;
-    }
-    return buildFallback();
-  }
+  if (!map || typeof map !== 'object') return buildFallback();
 
   const rawLang = (language || '').toLowerCase().trim();
   const primaryLang = rawLang.split(/[-_]/)[0];
@@ -150,15 +148,17 @@ export function parseTtsAudioUrl(
     }
   }
 
-  // Fallbacks if language key not found: 'en' -> first entry
+  // Use a language fallback only for the language entry, never for the audio type.
   if (!entry) {
     entry = map['en'] || map['ko'] || map['tl'] || Object.values(map)[0];
   }
 
   if (!entry) return buildFallback();
 
-  if (typeof entry === 'string') return entry;
+  if (typeof entry === 'string') {
+    return entry.endsWith(`_${type}.mp3`) ? entry : buildFallback();
+  }
 
-  const url = entry[type] || entry['word'] || entry['example'] || Object.values(entry)[0];
-  return typeof url === 'string' ? url : buildFallback();
+  const url = entry[type];
+  return typeof url === 'string' && url.endsWith(`_${type}.mp3`) ? url : buildFallback();
 }
