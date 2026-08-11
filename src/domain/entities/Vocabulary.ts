@@ -1,0 +1,31 @@
+export interface VocabularyEntity {
+  id: string;
+  conceptCode: string;
+  category: string;
+  difficultyLevel: string;
+  lessonId?: string | null;
+  displayOrder?: number | null;
+  wordEn: string | null;
+  wordKo: string | null;
+  wordTl: string | null;
+  wordTh: string | null;
+  wordVi: string | null;
+  wordJa: string | null;
+  exampleEn: string | null;
+  exampleKo: string | null;
+  exampleTl: string | null;
+  exampleTh: string | null;
+  exampleVi: string | null;
+  exampleJa: string | null;
+  phoneticEn: string | null;
+  phoneticKo: string | null;
+  phoneticTl: string | null;
+  phoneticTh: string | null;
+  phoneticVi: string | null;
+  phoneticJa: string | null;
+  imageUrl: string | null;
+  imageSource: string | null;
+  imagePrompt: string | null;
+  ttsAudioUrl?: string | null;
+  createdAt: string | null;
+}
