@@ -20,6 +20,7 @@ function mapRowToLessonEntity(row: any): AILessonEntity {
     descriptionEn: row.description_en || row.description,
     imageUrl: row.image_url,
     aiCaption: row.ai_caption,
+    displayOrder: row.display_order ?? 0,
     createdAt: row.created_at,
     completedAt: row.completed_at,
   };
@@ -59,7 +60,24 @@ export class AILessonRepository implements IAILessonRepository {
       if (error || !data) {
         return [];
       }
-      return data.map(mapRowToLessonEntity);
+      const lessons = data.map(mapRowToLessonEntity);
+      const { data: linkedVocabularies, error: linkError } = await supabase
+        .from('study_vocabularies')
+        .select('lesson_id')
+        .not('lesson_id', 'is', null);
+
+      // Keep the lesson list usable if the vocabulary metadata query fails.
+      if (linkError || !linkedVocabularies) return lessons;
+
+      const linkedLessonIds = new Set(
+        linkedVocabularies
+          .map((row: any) => row.lesson_id)
+          .filter(Boolean)
+      );
+
+      return lessons.filter(
+        (lesson) => linkedLessonIds.has(lesson.id) && lesson.id !== '11111111-1111-1111-1111-111111111111'
+      );
     } catch {
       return [];
     }
@@ -85,20 +103,9 @@ export class AILessonRepository implements IAILessonRepository {
         .eq('lesson_id', lessonId)
         .order('created_at', { ascending: true });
 
-      if (!vocabErr && vocabRows && vocabRows.length > 0) {
-        return vocabRows.map((row: any, index: number) => ({
-          id: `${lessonId}_${row.id}`,
-          lessonId,
-          vocabularyId: row.id,
-          displayOrder: index + 1,
-          boundingBox: null,
-          createdAt: row.created_at || new Date().toISOString(),
-          vocabulary: mapRowToVocabularyEntity(row),
-        }));
-      }
-
-      // 2. Smart Subject-based Category Fallback
+      // Fill incomplete lesson links from the real vocabulary category.
       const targetCategory = LESSON_CATEGORY_MAP[lessonId];
+      let combinedRows: any[] = vocabErr ? [] : [...(vocabRows || [])];
       if (targetCategory) {
         const { data: catRows } = await supabase
           .from('study_vocabularies')
@@ -107,79 +114,22 @@ export class AILessonRepository implements IAILessonRepository {
           .limit(10);
 
         if (catRows && catRows.length > 0) {
-          // Auto-heal: Link lesson_id in background
-          const idsToLink = catRows.map((r: any) => r.id);
-          supabase
+          const existingIds = new Set(combinedRows.map((row) => row.id));
+          combinedRows = [
+            ...combinedRows,
+            ...catRows.filter((row: any) => !existingIds.has(row.id)),
+          ].slice(0, 10);
+
+          const idsToLink = combinedRows.map((row: any) => row.id);
+          void supabase
             .from('study_vocabularies')
             .update({ lesson_id: lessonId })
             .in('id', idsToLink)
-            .then(() => {})
-            .catch(() => {});
-
-          return catRows.map((row: any, index: number) => ({
-            id: `${lessonId}_${row.id}`,
-            lessonId,
-            vocabularyId: row.id,
-            displayOrder: index + 1,
-            boundingBox: null,
-            createdAt: row.created_at || new Date().toISOString(),
-            vocabulary: mapRowToVocabularyEntity(row),
-          }));
+            .then(() => {});
         }
       }
 
-      // 3. Dynamic Title Analysis Fallback
-      let detectedCategory: string | null = null;
-      try {
-        const { data: lessonData } = await supabase
-          .from('ai_lessons')
-          .select('title, title_ko, title_en, description')
-          .eq('id', lessonId)
-          .single();
-
-        if (lessonData) {
-          const text = `${lessonData.title || ''} ${lessonData.title_ko || ''} ${lessonData.title_en || ''} ${lessonData.description || ''}`.toLowerCase();
-          if (text.includes('가족') || text.includes('family')) detectedCategory = 'family';
-          else if (text.includes('음식') || text.includes('food')) detectedCategory = 'food';
-          else if (text.includes('행동') || text.includes('action')) detectedCategory = 'actions';
-          else if (text.includes('동물') || text.includes('animal')) detectedCategory = 'animals';
-          else if (text.includes('색깔') || text.includes('color')) detectedCategory = 'colors';
-          else if (text.includes('장소') || text.includes('place')) detectedCategory = 'places';
-          else if (text.includes('여행') || text.includes('travel')) detectedCategory = 'travel';
-          else if (text.includes('집') || text.includes('home')) detectedCategory = 'home';
-          else if (text.includes('인사') || text.includes('greeting')) detectedCategory = 'greetings';
-          else if (text.includes('감정') || text.includes('feeling')) detectedCategory = 'feelings';
-        }
-      } catch (_e) {}
-
-      if (detectedCategory) {
-        const { data: dynRows } = await supabase
-          .from('study_vocabularies')
-          .select('*')
-          .eq('category', detectedCategory)
-          .limit(10);
-
-        if (dynRows && dynRows.length > 0) {
-          return dynRows.map((row: any, index: number) => ({
-            id: `${lessonId}_${row.id}`,
-            lessonId,
-            vocabularyId: row.id,
-            displayOrder: index + 1,
-            boundingBox: null,
-            createdAt: row.created_at || new Date().toISOString(),
-            vocabulary: mapRowToVocabularyEntity(row),
-          }));
-        }
-      }
-
-      // 4. Guaranteed Table Fallback: Return any available 10 vocabularies from study_vocabularies
-      const { data: guaranteedRows } = await supabase
-        .from('study_vocabularies')
-        .select('*')
-        .limit(10);
-
-      if (guaranteedRows && guaranteedRows.length > 0) {
-        return guaranteedRows.map((row: any, index: number) => ({
+      return combinedRows.map((row: any, index: number) => ({
           id: `${lessonId}_${row.id}`,
           lessonId,
           vocabularyId: row.id,
@@ -188,9 +138,6 @@ export class AILessonRepository implements IAILessonRepository {
           createdAt: row.created_at || new Date().toISOString(),
           vocabulary: mapRowToVocabularyEntity(row),
         }));
-      }
-
-      return [];
     } catch (err) {
       console.warn('[aiLessonRepository] getLessonVocabularies error:', err);
       return [];
@@ -204,7 +151,7 @@ export class AILessonRepository implements IAILessonRepository {
         user_id: lesson.userId,
         title: lesson.title,
         description: lesson.description,
-        image_url: lesson.imageUrl,
+        image_url: lesson.imageUrl || '',
         ai_caption: lesson.aiCaption,
         completed_at: lesson.completedAt,
       })
@@ -224,10 +171,9 @@ export class AILessonRepository implements IAILessonRepository {
     // 1:N Direct linkage: update study_vocabularies.lesson_id
     const { data, error } = await supabase
       .from('study_vocabularies')
-      .update({
-        lesson_id: lessonId,
-        display_order: displayOrder,
-      })
+        .update({
+          lesson_id: lessonId,
+        })
       .eq('id', vocabularyId)
       .select()
       .single();
@@ -239,9 +185,9 @@ export class AILessonRepository implements IAILessonRepository {
       id: `${lessonId}_${data.id}`,
       lessonId,
       vocabularyId: data.id,
-      displayOrder: data.display_order || displayOrder,
+       displayOrder,
       boundingBox: boundingBox || null,
-      createdAt: data.created_at,
+      createdAt: data.created_at || new Date().toISOString(),
       vocabulary: vocabEntity,
     };
   }

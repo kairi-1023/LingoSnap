@@ -1,29 +1,25 @@
 import { IAIQuizRepository } from '../../domain/repositories/IAIQuizRepository';
 import { AIQuizEntity, AIQuizQuestionEntity, QuizQuestionType } from '../../domain/entities/AIQuiz';
 import { supabase } from './client';
-import { Database } from '../../types/database.types';
 
-type QuizRow = Database['public']['Tables']['ai_quizzes']['Row'];
-type QuizQuestionRow = Database['public']['Tables']['ai_quiz_questions']['Row'];
-
-function mapRowToQuizEntity(row: QuizRow): AIQuizEntity {
+function mapRowToQuizEntity(row: any): AIQuizEntity {
   return {
     id: row.id,
     lessonId: row.lesson_id,
-    userId: row.user_id,
-    score: row.score,
-    completed: row.completed,
+    userId: row.user_id || '',
+    score: row.score || 0,
+    completed: row.completed ?? true,
     createdAt: row.created_at,
   };
 }
 
-function mapRowToQuestionEntity(row: QuizQuestionRow): AIQuizQuestionEntity {
+function mapRowToQuestionEntity(row: any): AIQuizQuestionEntity {
   return {
     id: row.id,
     quizId: row.quiz_id,
-    questionType: row.question_type as QuizQuestionType,
+    questionType: row.type as QuizQuestionType,
     questionText: row.question_text,
-    questionData: row.question_data as Record<string, any> | null,
+    questionData: null,
     options: row.options as any[] | null,
     correctAnswer: row.correct_answer,
     createdAt: row.created_at,
@@ -50,9 +46,6 @@ export class AIQuizRepository implements IAIQuizRepository {
         .from('ai_quizzes')
         .insert({
           lesson_id: quiz.lessonId,
-          user_id: quiz.userId,
-          score: quiz.score,
-          completed: quiz.completed,
         })
         .select()
         .single();
@@ -109,10 +102,9 @@ export class AIQuizRepository implements IAIQuizRepository {
       .from('ai_quiz_questions')
       .insert({
         quiz_id: question.quizId,
-        question_type: question.questionType,
-        question_text: question.questionText,
-        question_data: question.questionData,
-        options: question.options,
+        type: question.questionType,
+        question_text: question.questionText || '',
+        options: question.options || [],
         correct_answer: question.correctAnswer,
       })
       .select()
@@ -123,17 +115,10 @@ export class AIQuizRepository implements IAIQuizRepository {
   }
 
   async submitQuizScore(quizId: string, score: number): Promise<void> {
-    try {
-      await supabase
-        .from('ai_quizzes')
-        .update({
-          score,
-          completed: true,
-        })
-        .eq('id', quizId);
-    } catch (err) {
-      // Ignore DB error for offline/synthetic quizzes
-    }
+    // Scores are persisted in ai_user_progress because ai_quizzes only stores
+    // the lesson/session relation in the current database schema.
+    void quizId;
+    void score;
   }
 }
 

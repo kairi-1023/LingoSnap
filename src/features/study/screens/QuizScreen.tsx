@@ -28,10 +28,10 @@ import { BottomTabBar, TabType } from '../../../shared/components/BottomTabBar';
 import { useAuthStore } from '../../../shared/stores/useAuthStore';
 import { useThemeStore } from '../../../shared/stores/useThemeStore';
 import { quizService } from '../../../application/services/quizService';
-import { reviewService } from '../../../application/services/reviewService';
 import { progressService } from '../../../application/services/progressService';
 import { soundService } from '../../../shared/services/soundService';
 import { ttsService } from '../../../shared/services/ttsService';
+import { studyService } from '../../../shared/services/studyService';
 
 import { AIQuizQuestionEntity } from '../../../domain/entities/AIQuiz';
 
@@ -289,7 +289,7 @@ export const QuizScreen: React.FC<QuizScreenProps> = React.memo(({
       if (user?.id && vocabularyId && !submittedSrsRef.current.has(vocabularyId)) {
         submittedSrsRef.current.add(vocabularyId);
         try {
-          await reviewService.upsertReviewItem(user.id, vocabularyId, 'easy');
+          await studyService.updateWordSrsResult(user.id, vocabularyId, 'easy');
         } catch (err) {
           console.warn('[QuizScreen] SRS Easy rating update warning:', err);
         }
@@ -300,7 +300,7 @@ export const QuizScreen: React.FC<QuizScreenProps> = React.memo(({
       if (user?.id && vocabularyId && !submittedSrsRef.current.has(vocabularyId)) {
         submittedSrsRef.current.add(vocabularyId);
         try {
-          await reviewService.upsertReviewItem(user.id, vocabularyId, 'forgot');
+          await studyService.updateWordSrsResult(user.id, vocabularyId, 'forgot');
         } catch (err) {
           console.warn('[QuizScreen] SRS Forgot rating update warning:', err);
         }

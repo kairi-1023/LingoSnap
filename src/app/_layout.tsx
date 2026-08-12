@@ -10,6 +10,7 @@ import { useAuthStore } from '../shared/stores/useAuthStore';
 import { SplashScreen as AppSplashScreen } from '../features/auth/screens/SplashScreen';
 import { ErrorBoundary } from '../shared/components/ErrorBoundary';
 import { useBootstrap } from '../shared/hooks/useBootstrap';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 if (Platform.OS !== 'web') {
   SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -78,9 +79,11 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFDF7" />
-      <ErrorBoundary>
-        <RouteGuard />
-      </ErrorBoundary>
+      <SafeAreaProvider>
+        <ErrorBoundary>
+          <RouteGuard />
+        </ErrorBoundary>
+      </SafeAreaProvider>
     </QueryClientProvider>
   );
 }

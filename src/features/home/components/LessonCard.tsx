@@ -1,17 +1,18 @@
 import React from 'react';
 import { View, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { ArrowRight, BookOpen, CheckCircle } from 'lucide-react-native';
 import { Typography } from '../../../shared/components/Typography';
 import { ProgressBar } from '../../../shared/components/ProgressBar';
 import { spacing } from '../../../shared/theme/spacing';
 import { colors } from '../../../shared/theme/colors';
-import { Theme } from '../../../shared/theme/theme';
+import { ThemeColors } from '../../../shared/stores/useThemeStore';
 import { AILessonEntity } from '../../../domain/entities/AILesson';
 
 interface LessonCardProps {
   lesson: AILessonEntity;
   progressPercent?: number;
-  theme: Theme;
+  theme: ThemeColors;
   onSelectLesson: (lessonId: string) => void;
 }
 
@@ -24,6 +25,7 @@ export const LessonCard: React.FC<LessonCardProps> = React.memo(({
   theme,
   onSelectLesson,
 }) => {
+  const { t } = useTranslation();
   const displayLanguage = useSettingsStore((state) => state.displayLanguage);
   const isCompleted = !!lesson.completedAt || progressPercent >= 100;
   const imageUrl = getVocabularyImageUrl(lesson.titleEn || lesson.title || 'family');
@@ -40,7 +42,7 @@ export const LessonCard: React.FC<LessonCardProps> = React.memo(({
       activeOpacity={0.8}
       onPress={() => onSelectLesson(lesson.id)}
     >
-      <View style={[styles.imageWrapper, { backgroundColor: theme.surfaceHighlight }]}>
+      <View style={[styles.imageWrapper, { backgroundColor: theme.subtleSurface }]}> 
         <Image
           source={imageUrl ? { uri: imageUrl } : undefined}
           style={styles.cardImage}
@@ -50,8 +52,8 @@ export const LessonCard: React.FC<LessonCardProps> = React.memo(({
         {isCompleted && (
           <View style={[styles.completedBadge, { backgroundColor: theme.successBg }]}>
             <CheckCircle size={14} color={colors.primary} />
-            <Typography variant="micro" style={{ color: colors.primary, fontWeight: '700', marginLeft: 4 }}>
-              완료
+              <Typography variant="caption" style={{ color: colors.primary, fontWeight: '700', marginLeft: 4 }}>
+              {t('study.lessonCompleted')}
             </Typography>
           </View>
         )}
@@ -70,10 +72,10 @@ export const LessonCard: React.FC<LessonCardProps> = React.memo(({
 
         <View style={styles.progressRow}>
           <View style={styles.progressTrack}>
-            <ProgressBar progressPercentage={progressPercent} height={6} />
+            <ProgressBar progress={progressPercent / 100} height={6} />
           </View>
-          <Typography variant="micro" style={[styles.progressText, { color: theme.textSecondary }]}>
-            {Math.round(progressPercent)}%
+          <Typography variant="caption" style={[styles.progressText, { color: theme.textSecondary }]}> 
+            {t('study.lessonProgress', { percent: Math.round(progressPercent) })}
           </Typography>
         </View>
       </View>

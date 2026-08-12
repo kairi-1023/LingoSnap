@@ -5,6 +5,7 @@ import {
   StatusBar,
   KeyboardAvoidingView,
   Platform,
+  BackHandler,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -38,6 +39,17 @@ const StudyHubScreen: React.FC = React.memo(() => {
   const [stepState, setStepState] = useState<StepState>('word_learning');
   const [reviewCount, setReviewCount] = useState(0);
   const user = useAuthStore((state) => state.user);
+
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      router.replace('/(tabs)');
+      return true;
+    });
+
+    return () => subscription.remove();
+  }, [router]);
 
   useEffect(() => {
     studyService.getDueReviewWords(user?.id, user?.nativeLang, user?.targetLang)

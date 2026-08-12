@@ -95,8 +95,8 @@ export class TTSService {
   }
 
   private async speakInternal(options: SpeakOptions): Promise<void> {
-    const requestId = ++this.currentRequestId;
     this.stop();
+    const requestId = ++this.currentRequestId;
 
     const { text, language, audioUrl, rate, forceTts, onEnd, onError } = options;
     if (!text) {
@@ -131,6 +131,21 @@ export class TTSService {
 
   private playAudioUrl(url: string, rate?: number, onEnd?: () => void, onError?: (error: Error) => void): Promise<void> {
     return new Promise((resolve, reject) => {
+      let settled = false;
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        this.cleanupPlayer();
+        onEnd?.();
+        resolve();
+      };
+      const fail = (error: Error) => {
+        if (settled) return;
+        settled = true;
+        this.cleanupPlayer();
+        reject(error);
+      };
+
       try {
         const player = createAudioPlayer({ uri: url });
         this.currentPlayer = player;
@@ -152,23 +167,20 @@ export class TTSService {
 
         this.statusListener = player.addListener('playbackStatusUpdate', (status: any) => {
           if (status.error || status.status === 'error') {
-            this.cleanupPlayer();
-            reject(new Error(typeof status.error === 'string' ? status.error : 'Audio playback status error'));
+            fail(new Error(typeof status.error === 'string' ? status.error : 'Audio playback status error'));
             return;
           }
           if (status.isLoaded) {
             applyRate();
           }
           if (status.didJustFinish) {
-            this.cleanupPlayer();
-            onEnd?.();
+            finish();
           }
         });
 
         this.loadTimeoutId = setTimeout(() => {
           if (!player.isLoaded) {
-            this.cleanupPlayer();
-            reject(new Error('Audio load timeout'));
+            fail(new Error('Audio load timeout'));
           }
         }, 8000);
 
@@ -179,22 +191,20 @@ export class TTSService {
           playPromise.catch((playErr: any) => {
             const errStr = String(playErr || '');
             if (playErr?.name === 'AbortError' || errStr.includes('interrupted')) {
+              fail(new Error('Audio playback interrupted'));
               return;
             }
             if (playErr?.name === 'NotAllowedError' || errStr.includes("user didn't interact") || errStr.includes('NotAllowedError')) {
               // Let speakInternal invoke the native speech fallback.
-              this.cleanupPlayer();
-              reject(playErr instanceof Error ? playErr : new Error('Audio playback requires user interaction'));
+              fail(playErr instanceof Error ? playErr : new Error('Audio playback requires user interaction'));
               return;
             }
             console.warn('[TTSService] player.play() error:', playErr);
-            this.cleanupPlayer();
-            reject(playErr instanceof Error ? playErr : new Error(String(playErr)));
+            fail(playErr instanceof Error ? playErr : new Error(String(playErr)));
           });
         }
-        resolve();
       } catch (err) {
-        reject(err);
+        fail(err instanceof Error ? err : new Error(String(err)));
       }
     });
   }
@@ -297,6 +307,7 @@ export class TTSService {
   }
 
   stop(): void {
+    this.currentRequestId += 1;
     Speech.stop().catch(() => {});
 
     this.cleanupPlayer();

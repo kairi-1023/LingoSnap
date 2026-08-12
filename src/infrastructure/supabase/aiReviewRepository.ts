@@ -35,7 +35,7 @@ function mapRowToReviewEntity(row: any): AIReviewItemEntity {
     srsStage: row.srs_stage,
     nextReviewAt: row.next_review_at,
     lastReviewedAt: row.last_reviewed_at,
-    correctCount: row.correct_count,
+    correctCount: row.review_count,
     wrongCount: row.wrong_count,
     createdAt: row.created_at,
     vocabulary: row.study_vocabularies ? mapRowToVocabularyEntity(row.study_vocabularies) : undefined,
@@ -124,7 +124,7 @@ export class AIReviewRepository implements IAIReviewRepository {
           srs_stage: newStage,
           next_review_at: nextDate.toISOString(),
           last_reviewed_at: now,
-          correct_count: correctCount,
+          review_count: correctCount,
           wrong_count: wrongCount,
         };
 

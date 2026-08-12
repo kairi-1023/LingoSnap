@@ -126,11 +126,11 @@ export const HomeScreen: React.FC = React.memo(() => {
             <BookOpen size={28} color="#FFFFFF" />
           </View>
           <View style={{ flex: 1, marginLeft: 16 }}>
-            <Typography variant="h3" style={{ color: theme.textPrimary }}>
-              오늘의 5분 학습 시작하기
+              <Typography variant="sectionTitle" style={{ color: theme.textPrimary }}>
+              {t('study.todayFiveMinuteStudy')}
             </Typography>
             <Typography variant="caption" color="textSecondary" style={{ marginTop: 4 }}>
-              10개 어휘 학습 & 이미지 퀴즈 풀기 ➔
+              {t('study.tenWordsImageQuiz')} ➔
             </Typography>
           </View>
           <ArrowRight size={22} color={theme.primary} />

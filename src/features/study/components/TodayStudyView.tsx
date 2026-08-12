@@ -2,6 +2,7 @@ import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { BookOpen } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { spacing } from '../../../shared/theme/spacing';
 import { Typography } from '../../../shared/components/Typography';
 import { SkeletonCard } from '../../../shared/components/Skeleton';
@@ -11,6 +12,7 @@ import { LessonCard } from '../../home/components/LessonCard';
 
 export const TodayStudyView: React.FC = React.memo(() => {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
 
   const {
     theme,
@@ -32,10 +34,10 @@ export const TodayStudyView: React.FC = React.memo(() => {
     >
       <View style={styles.lessonSection}>
         <Typography variant="sectionTitle" style={[styles.sectionHeaderTitle, { color: theme.textPrimary }]}> 
-          추천 레슨 (Recommended Lessons)
+          {t('study.recommendedLessons')}
         </Typography>
         <Typography variant="body" color="textSecondary" style={{ marginBottom: spacing.md }}>
-          시각적 사진과 함께 학습할 레슨을 선택해 보세요. (각 10개 어휘 학습 + 퀴즈)
+          {t('study.recommendedLessonsSubtitle')}
         </Typography>
 
         {isLessonsLoading ? (
@@ -47,17 +49,17 @@ export const TodayStudyView: React.FC = React.memo(() => {
         ) : isLessonsError ? (
           <EmptyState
             icon={<BookOpen size={28} color={theme.textSecondary} />}
-            title="레슨을 불러올 수 없습니다"
-            subtitle="네트워크 연결 상태를 확인하고 다시 시도해 주세요."
-            actionLabel="다시 시도"
+            title={t('study.lessonsLoadErrorTitle')}
+            subtitle={t('study.lessonsLoadErrorSubtitle')}
+            actionLabel={t('common.retry', 'Retry')}
             onAction={refetchLessons}
           />
         ) : lessons.length === 0 ? (
           <EmptyState
             icon={<BookOpen size={28} color={theme.textSecondary} />}
-            title="사용 가능한 레슨이 없습니다"
-            subtitle="새로운 어휘 레슨이 준비 중입니다. 잠시 후 다시 확인해 주세요."
-            actionLabel="새로고침"
+            title={t('study.noLessonsTitle')}
+            subtitle={t('study.noLessonsSubtitle')}
+            actionLabel={t('common.refresh', 'Refresh')}
             onAction={refetchLessons}
           />
         ) : (

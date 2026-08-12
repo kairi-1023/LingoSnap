@@ -11,6 +11,7 @@ export interface AILessonEntity {
   descriptionEn?: string | null;
   imageUrl: string | null;
   aiCaption: string | null;
+  displayOrder: number;
   createdAt: string;
   completedAt: string | null;
 }

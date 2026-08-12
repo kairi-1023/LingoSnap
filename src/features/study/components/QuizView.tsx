@@ -51,7 +51,6 @@ export const QuizView: React.FC<QuizViewProps> = React.memo(({ onCompleteQuizSte
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isChecked, setIsChecked] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const quizResultsRef = useRef<{ conceptId: string; rating: SrsRating }[]>([]);
 
   // Async Safety & Session Guard Refs
   const transitionLockRef = useRef(false);
@@ -117,13 +116,6 @@ export const QuizView: React.FC<QuizViewProps> = React.memo(({ onCompleteQuizSte
       setIsSubmitting(true);
       try {
         if (user?.id) {
-          if (quizResultsRef.current.length > 0) {
-            await Promise.all(
-              quizResultsRef.current.map(res =>
-                studyService.updateWordSrsResult(user.id, res.conceptId, res.rating).catch(() => {})
-              )
-            );
-          }
           await studyService.finishStudySession(user.id);
         }
       } catch (err) {
@@ -201,8 +193,9 @@ export const QuizView: React.FC<QuizViewProps> = React.memo(({ onCompleteQuizSte
         ? slowResponse ? 'hard' : 'easy'
         : 'forgot';
       
-      const result = { conceptId, rating };
-      quizResultsRef.current = [...quizResultsRef.current, result];
+      studyService.updateWordSrsResult(user.id, conceptId, rating).catch((err) => {
+        console.warn('[QuizView] Failed to update SRS result:', err);
+      });
     }
   }, [isChecked, currentQuiz, user?.targetLang, user?.id, handleNextQuestion]);
 

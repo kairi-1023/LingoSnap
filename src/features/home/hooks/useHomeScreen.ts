@@ -70,6 +70,21 @@ export function useHomeScreen() {
     return map;
   }, [userProgresses]);
 
+  const sortedLessons = useMemo(() => {
+    return [...lessons].sort((a, b) => {
+      const aProgress = lessonProgressMap[a.id] || 0;
+      const bProgress = lessonProgressMap[b.id] || 0;
+      const aCompleted = !!a.completedAt || aProgress >= 100;
+      const bCompleted = !!b.completedAt || bProgress >= 100;
+      const aRank = aCompleted ? 2 : aProgress > 0 ? 0 : 1;
+      const bRank = bCompleted ? 2 : bProgress > 0 ? 0 : 1;
+
+      if (aRank !== bRank) return aRank - bRank;
+      if (a.displayOrder !== b.displayOrder) return a.displayOrder - b.displayOrder;
+      return a.createdAt.localeCompare(b.createdAt);
+    });
+  }, [lessons, lessonProgressMap]);
+
   const userFirstName = useMemo(
     () => (user?.displayName ? user.displayName.split(' ')[0] : user?.email?.split('@')[0] || 'User'),
     [user?.displayName, user?.email]
@@ -109,7 +124,7 @@ export function useHomeScreen() {
     setIsLanguageModalVisible,
     langPairFlags,
 
-    lessons,
+    lessons: sortedLessons,
     lessonProgressMap,
     isLessonsLoading,
     isLessonsError,

@@ -777,11 +777,24 @@ export class SupabaseStudyRepository implements IStudyRepository {
         return [];
       }
 
-      if (srsData && srsData.length > 0) {
-        const conceptIds = srsData.map((d: any) => d.concept_id).filter(Boolean);
+      // Include legacy AI review rows so existing quiz progress remains reviewable.
+      const { data: aiReviewData } = await supabase
+        .from('ai_review_items')
+        .select('vocabulary_id, srs_stage')
+        .eq('user_id', userId)
+        .lte('next_review_at', nowIso)
+        .order('next_review_at', { ascending: true });
+
+      const reviewRecords = [
+        ...(srsData || []).map((d: any) => ({ id: d.concept_id, stage: d.srs_stage })),
+        ...(aiReviewData || []).map((d: any) => ({ id: d.vocabulary_id, stage: d.srs_stage })),
+      ].filter((record) => record.id);
+
+      if (reviewRecords.length > 0) {
+        const conceptIds = Array.from(new Set(reviewRecords.map((record) => record.id)));
         const srsStageMap: Record<string, number> = {};
-        srsData.forEach((d: any) => {
-          if (d.concept_id) srsStageMap[d.concept_id] = d.srs_stage || 0;
+        reviewRecords.forEach((record) => {
+          srsStageMap[record.id] = record.stage || 0;
         });
 
         const vocabData = await fetchVocabulariesByIdsOrConcepts(conceptIds);
