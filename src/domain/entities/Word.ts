@@ -5,6 +5,8 @@ export interface WordEntity {
   conceptId?: string;
   wordNative: string;
   wordTarget: string;
+  imageWord?: string | null;
+  lessonId?: string | null;
   phonetic?: string | null;
   exampleSentence?: string | null;
   exampleNative?: string | null;
@@ -21,4 +23,3 @@ export interface WordEntity {
   ttsVoiceName?: string | null;
   ttsGeneratedAt?: string | null;
 }
-

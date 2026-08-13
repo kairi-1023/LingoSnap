@@ -1,9 +1,11 @@
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   View,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
+  Pressable,
+  Platform,
   StatusBar,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,10 +15,12 @@ import { Typography } from '../../../shared/components/Typography';
 import { spacing } from '../../../shared/theme/spacing';
 import { GuestAuthModal } from '../../../shared/components/GuestAuthModal';
 import { LanguageSelectModal } from '../../../shared/components/LanguageSelectModal';
-import { SkeletonCard } from '../../../shared/components/Skeleton';
-import { BookOpen, ArrowRight } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useHomeScreen } from '../hooks/useHomeScreen';
+import { studyService } from '../../../shared/services/studyService';
+import { LessonCard } from '../components/LessonCard';
+import { ReviewWordsCard } from '../components/ReviewWordsCard';
+import { TodayWordCard } from '../components/TodayWordCard';
 
 export const HomeScreen: React.FC = React.memo(() => {
   const insets = useSafeAreaInsets();
@@ -33,17 +37,35 @@ export const HomeScreen: React.FC = React.memo(() => {
     langPairFlags,
     lessons,
     lessonProgressMap,
-    isLessonsLoading,
-    isLessonsError,
-    refetchLessons,
+    learnedWords,
+    isLearnedWordsLoading,
     userFirstName,
     userInitials,
 
     handleSaveLanguage,
     handleSelectLesson,
+    handleSelectLearnedWord,
     handleTabPress,
     router,
   } = useHomeScreen();
+
+  const nextLesson = lessons.find((lesson) => {
+    const progress = lessonProgressMap[lesson.id] || 0;
+    const isCompleted = progress >= 100 || (!!user?.id && lesson.userId === user.id && !!lesson.completedAt);
+    return !isCompleted;
+  }) || lessons[0];
+  const nextLessonProgress = nextLesson
+    ? Math.min(100, Math.max(0, lessonProgressMap[nextLesson.id] || 0))
+    : 0;
+
+  const { data: allVocabulary = [] } = useQuery({
+    queryKey: ['homeTodayWordVocabulary', user?.nativeLang, user?.targetLang],
+    queryFn: () => studyService.getAllVocabulary(user?.nativeLang, user?.targetLang, 0, 100),
+    enabled: !!user?.id,
+    staleTime: 1000 * 60 * 5,
+  });
+  const learnedWordIds = new Set(learnedWords.flatMap((word) => [word.id, word.conceptId].filter(Boolean) as string[]));
+  const todayWord = allVocabulary.find((word) => !learnedWordIds.has(word.id) && !learnedWordIds.has(word.conceptId || ''));
 
   return (
     <SafeAreaView
@@ -68,7 +90,7 @@ export const HomeScreen: React.FC = React.memo(() => {
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingBottom: 64 + insets.bottom + 16 },
+          { paddingBottom: 72 + insets.bottom + 20 },
         ]}
         showsVerticalScrollIndicator={false}
       >
@@ -82,16 +104,21 @@ export const HomeScreen: React.FC = React.memo(() => {
               {t('home.greeting', { name: userFirstName })}
             </Typography>
 
-            <TouchableOpacity
-              style={[
+            <Pressable
+              style={({ pressed }) => [
                 styles.languageChip,
                 {
                   backgroundColor: isDarkMode ? 'rgba(92, 184, 92, 0.15)' : '#F0FDF4',
                   borderColor: isDarkMode ? 'rgba(92, 184, 92, 0.3)' : '#DCFCE7',
                 },
+                pressed && Platform.OS !== 'android' && { opacity: 0.7 },
               ]}
-              activeOpacity={0.7}
+              android_ripple={{
+                color: 'rgba(92, 184, 92, 0.2)',
+                borderless: false,
+              }}
               onPress={() => setIsLanguageModalVisible(true)}
+              accessibilityRole="button"
             >
               <Typography
                 variant="caption"
@@ -99,7 +126,7 @@ export const HomeScreen: React.FC = React.memo(() => {
               >
                 {langPairFlags.formatted}
               </Typography>
-            </TouchableOpacity>
+            </Pressable>
           </View>
 
           <Typography
@@ -109,33 +136,42 @@ export const HomeScreen: React.FC = React.memo(() => {
             ellipsizeMode="tail"
             style={styles.greetingSubtitle}
           >
-            하루 5분, 시각적 어휘와 이미지 퀴즈로 성장해 보세요.
+            {t('home.studyPrompt')}
           </Typography>
         </View>
 
-        {/* Quick Start Study CTA Card */}
-        <TouchableOpacity
-          style={[
-            styles.quickStudyCard,
-            { backgroundColor: theme.cardBackground, borderColor: theme.primary },
-          ]}
-          activeOpacity={0.85}
-          onPress={() => router.push('/(tabs)/study')}
-        >
-          <View style={[styles.quickStudyIconBadge, { backgroundColor: theme.primary }]}>
-            <BookOpen size={28} color="#FFFFFF" />
+        {/* 1. PRIMARY: 5 Min Daily Lesson Hero Card */}
+        {nextLesson && (
+          <View style={styles.continueSection}>
+            <LessonCard
+              lesson={nextLesson}
+              progressPercent={nextLessonProgress}
+              theme={theme}
+              onSelectLesson={handleSelectLesson}
+            />
           </View>
-          <View style={{ flex: 1, marginLeft: 16 }}>
-              <Typography variant="sectionTitle" style={{ color: theme.textPrimary }}>
-              {t('study.todayFiveMinuteStudy')}
-            </Typography>
-            <Typography variant="caption" color="textSecondary" style={{ marginTop: 4 }}>
-              {t('study.tenWordsImageQuiz')} ➔
-            </Typography>
-          </View>
-          <ArrowRight size={22} color={theme.primary} />
-        </TouchableOpacity>
+        )}
+
+        {/* 2. SECONDARY: 오늘의 한 단어 */}
+        {todayWord && (
+          <TodayWordCard
+            theme={theme}
+            word={todayWord}
+            onPress={() => router.push('/(tabs)/study')}
+          />
+        )}
+
+        {/* 3. REVIEW: 내가 배웠던 단어 */}
+        <ReviewWordsCard
+          theme={theme}
+          words={learnedWords}
+          isLoading={isLearnedWordsLoading}
+          onSelectWord={handleSelectLearnedWord}
+        />
+
       </ScrollView>
+
+
 
       <GuestAuthModal
         visible={isGuestModalVisible}
@@ -167,13 +203,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.md,
     flexGrow: 1,
   },
   greetingSection: {
-    marginTop: 14,
-    marginBottom: 16,
+    marginTop: 6,
+    marginBottom: 12,
   },
+
   greetingHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -184,18 +221,19 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 4,
     minWidth: 0,
-    fontSize: 20,
+    fontSize: 19,
     fontWeight: '700',
   },
   languageChip: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingVertical: 4,
     borderRadius: 10,
     borderWidth: 1,
     alignSelf: 'center',
     minHeight: 28,
+    overflow: 'hidden',
   },
   languageChipText: {
     fontWeight: '700',
@@ -204,28 +242,16 @@ const styles = StyleSheet.create({
   },
   greetingSubtitle: {
     marginTop: 4,
-    fontSize: 15,
+    fontSize: 13,
+    lineHeight: 18,
   },
-  quickStudyCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: spacing.md,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    marginTop: spacing.md,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  quickStudyIconBadge: {
-    width: 52,
-    height: 52,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
+  continueSection: {
+    marginTop: 4,
   },
 });
+
+
+
+
 
 export default HomeScreen;

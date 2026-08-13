@@ -12,6 +12,8 @@ export interface IStudyRepository {
   getDueReviewWords(userId: string, nativeLang?: string, targetLang?: string): Promise<WordEntity[]>;
   getTodayStudiedWords(userId: string, nativeLang?: string, targetLang?: string): Promise<WordEntity[]>;
   getStudiedWords(userId: string, nativeLang?: string, targetLang?: string, offset?: number, limit?: number): Promise<WordEntity[]>;
+  getStudiedWordsCount(userId: string): Promise<number>;
+  getLessonProgressMap(userId: string, lessonIds: string[]): Promise<Record<string, number>>;
   getAllVocabulary(nativeLang?: string, targetLang?: string, offset?: number, limit?: number): Promise<WordEntity[]>;
   markWordsAsStudied(userId: string, conceptIds: string[]): Promise<void>;
   saveStudyCompletion(userId: string, xp: number, conceptIds?: string[]): Promise<StudyCompletionResult>;

@@ -25,6 +25,7 @@ import { CompactHeader } from '../components/CompactHeader';
 
 import { useAuthStore } from '../../../shared/stores/useAuthStore';
 import { useStudyStore } from '../../../shared/stores/useStudyStore';
+import { useSettingsStore } from '../../../shared/stores/useSettingsStore';
 import { useThemeStore } from '../../../shared/stores/useThemeStore';
 import { lessonService } from '../../../application/services/lessonService';
 import { progressService } from '../../../application/services/progressService';
@@ -109,6 +110,7 @@ export const ImageLessonScreen: React.FC<ImageLessonScreenProps> = React.memo(({
 
   const nativeLang = user?.nativeLang || 'ko';
   const targetLang = user?.targetLang || 'en';
+  const displayLanguage = useSettingsStore((state) => state.displayLanguage);
 
   const isEnglishUser = useMemo(() => {
     return (nativeLang || 'ko').toLowerCase().startsWith('en');
@@ -177,7 +179,7 @@ export const ImageLessonScreen: React.FC<ImageLessonScreenProps> = React.memo(({
     } else if (router.canGoBack()) {
       router.back();
     } else {
-      router.replace('/(tabs)');
+      router.replace('/(tabs)/study');
     }
   }, [onBack, router]);
 
@@ -200,6 +202,17 @@ export const ImageLessonScreen: React.FC<ImageLessonScreenProps> = React.memo(({
     staleTime: 0,
   });
 
+  const { data: lesson } = useQuery({
+    queryKey: ['lesson', lessonId],
+    queryFn: () => lessonService.getLessonById(lessonId),
+    enabled: !!lessonId,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const lessonTitle = displayLanguage === 'ko'
+    ? lesson?.titleKo || lesson?.title || uiText.headerTitle
+    : lesson?.titleEn || lesson?.title || uiText.headerTitle;
+
   // Map to unified Data Contract (LessonVocabulary)
   const lessonVocabularies: LessonVocabulary[] = useMemo(() => {
     return rawLessonVocabs.map((item) => {
@@ -221,6 +234,7 @@ export const ImageLessonScreen: React.FC<ImageLessonScreenProps> = React.memo(({
         category: vocab?.category,
         difficultyLevel: vocab?.difficultyLevel,
         word,
+        imageWord: wordEn,
         meaning,
         image_url,
         example_sentence,
@@ -317,6 +331,7 @@ export const ImageLessonScreen: React.FC<ImageLessonScreenProps> = React.memo(({
         id: currentVocab.id,
         conceptId: currentVocab.id,
         wordTarget: currentVocab.word,
+        imageWord: currentVocab.imageWord || currentVocab.word,
         wordNative: currentVocab.meaning,
         phonetic: currentVocab.phonetic || null,
         exampleSentence: currentVocab.example_sentence || null,
@@ -415,7 +430,7 @@ export const ImageLessonScreen: React.FC<ImageLessonScreenProps> = React.memo(({
   if (isLoading) {
     return (
       <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]} edges={['top', 'left', 'right']}>
-        <CompactHeader title={uiText.headerTitle} onBackPress={handleBack} />
+        <CompactHeader title={lessonTitle} onBackPress={handleBack} />
         <View style={styles.loadingContainer}>
           <SkeletonCard />
         </View>
@@ -427,7 +442,7 @@ export const ImageLessonScreen: React.FC<ImageLessonScreenProps> = React.memo(({
   if (isError || totalCount === 0 || !currentVocab) {
     return (
       <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]} edges={['top', 'left', 'right']}>
-        <CompactHeader title={uiText.headerTitle} onBackPress={handleBack} />
+        <CompactHeader title={lessonTitle} onBackPress={handleBack} />
         <View style={styles.errorContainer}>
           <EmptyState
             icon={<BookOpen size={36} color={theme.textSecondary} />}
@@ -450,7 +465,7 @@ export const ImageLessonScreen: React.FC<ImageLessonScreenProps> = React.memo(({
 
       {/* Top Header with Multi-language Dynamic Title */}
       <CompactHeader
-        title={uiText.headerTitle}
+        title={lessonTitle}
         onBackPress={handleBack}
         showProgress={true}
         currentStep={currentIndex + 1}

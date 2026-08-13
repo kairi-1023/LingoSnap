@@ -5,6 +5,7 @@ export interface LessonVocabulary {
   category?: string;
   difficultyLevel?: string;
   word: string;
+  imageWord?: string | null;
   meaning: string;
   image_url: string | null;
   example_sentence: string;

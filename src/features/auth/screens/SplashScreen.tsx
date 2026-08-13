@@ -19,7 +19,7 @@ import { Logo } from '../../../shared/components/Logo';
 import { Typography } from '../../../shared/components/Typography';
 import { useThemeStore } from '../../../shared/stores/useThemeStore';
 import { styles, ILLUSTRATION_MAX_WIDTH } from './SplashScreen.styles';
-import ko from '../../../shared/i18n/locales/ko/common.json';
+
 
 interface SplashScreenProps {
   onFinishLoading?: () => void;
@@ -146,20 +146,20 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
       style={[
         styles.safeArea,
         {
-          backgroundColor: theme.background,
+          backgroundColor: theme.isDarkMode ? theme.background : '#FFFDF7',
         },
       ]}
     >
       <StatusBar
-        barStyle={theme.statusBarStyle}
-        backgroundColor={theme.background}
+        barStyle={theme.isDarkMode ? 'light-content' : 'dark-content'}
+        backgroundColor={theme.isDarkMode ? theme.background : '#FFFDF7'}
       />
 
       <View
         style={[
           styles.container,
           {
-            backgroundColor: theme.background,
+            backgroundColor: theme.isDarkMode ? theme.background : '#FFFDF7',
           },
         ]}
       >
@@ -174,8 +174,8 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
           ]}
         >
           <Logo
-            width={105}
-            height={72}
+            width={96}
+            height={68}
           />
 
           <Typography
@@ -184,7 +184,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
             align="center"
             style={styles.brandTitle}
           >
-            {t('auth.welcome', ko.auth.welcome)}
+            {t('auth.welcome', 'LingoSnap')}
           </Typography>
 
           <Typography
@@ -193,15 +193,12 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
             align="center"
             style={styles.tagline}
           >
-            {t('auth.tagline', ko.auth.tagline)}
+            {t('auth.tagline', '사진 한 장으로 시작하는 5분 언어 습관')}
           </Typography>
         </Animated.View>
 
         {/* -----------------------------------
             Hero Illustration
-
-            1024 x 1024 WebP
-            Rounded card presentation
         ----------------------------------- */}
 
         <Animated.View
@@ -233,7 +230,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
             style={[
               styles.progressTrack,
               {
-                backgroundColor: theme.fillSubtle,
+                backgroundColor: theme.isDarkMode ? theme.fillSubtle : '#E8F5E9',
               },
             ]}
           >
@@ -256,14 +253,12 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
             align="center"
             style={styles.brandFooter}
           >
-            {t('auth.dailyTagline', ko.auth.dailyTagline)}
+            {t('auth.dailyTagline', 'LINGOSNAP • DAILY 5 MIN FLOW')}
           </Typography>
         </Animated.View>
       </View>
     </SafeAreaView>
   );
 };
-
-
 
 export default SplashScreen;

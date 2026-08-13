@@ -81,6 +81,31 @@ async function fetchVocabulariesByIdsOrConcepts(rawIds: string[], categoryFilter
   return results;
 }
 
+async function attachImageWords(localWords: WordEntity[]): Promise<WordEntity[]> {
+  const ids = localWords.filter((word) => isValidUuid(word.id)).map((word) => word.id);
+  console.log('[StudyRepository IMAGE DEBUG] local image lookup ids:', ids);
+  if (ids.length === 0) return localWords;
+
+  try {
+    const { data, error } = await supabase
+      .from('study_vocabularies')
+      .select('id, lesson_id, word_en, concept_code')
+      .in('id', ids);
+    console.log('[StudyRepository IMAGE DEBUG] vocabulary image rows:', { data, error });
+    if (!data) return localWords;
+
+    const imageWords = new Map(data.map((row: any) => [row.id, row.word_en || row.concept_code]));
+    const lessonIds = new Map(data.map((row: any) => [row.id, row.lesson_id]));
+    return localWords.map((word) => ({
+      ...word,
+      imageWord: word.imageWord || imageWords.get(word.id) || null,
+      lessonId: word.lessonId || lessonIds.get(word.id) || null,
+    }));
+  } catch {
+    return localWords;
+  }
+}
+
 // Helper: Map language names/codes to standard 2-letter ISO codes (ko, en only)
 const getStandardLangCode = (lang: string): string => {
   const norm = (lang || '').toLowerCase().trim();
@@ -392,6 +417,8 @@ export class SupabaseStudyRepository implements IStudyRepository {
               conceptId: row.id,
               wordNative: wNative,
               wordTarget: wTarget,
+              imageWord: row.word_en || row.concept_code,
+              lessonId: row.lesson_id || null,
               phonetic: phonetic,
               exampleSentence: exTarget,
               exampleNative: exNative,
@@ -873,6 +900,8 @@ export class SupabaseStudyRepository implements IStudyRepository {
         conceptId: row.id,
         wordNative: row[`word_${nativeCode}`] || row.word_ko || row.word_en || 'Word',
         wordTarget: row[`word_${targetCode}`] || row.word_en || row.word_ko || 'Word',
+        imageWord: row.word_en || row.concept_code,
+        lessonId: row.lesson_id || null,
         phonetic: row[`phonetic_${targetCode}`] || row[`phonetic_${nativeCode}`] || null,
         exampleSentence: row[`example_${targetCode}`] || row.example_en || row.example_ko || null,
         exampleNative: row[`example_${nativeCode}`] || row.example_ko || row.example_en || null,
@@ -1008,8 +1037,8 @@ export class SupabaseStudyRepository implements IStudyRepository {
     const localWords = await getStudiedWordsFromLocal(userId);
 
     if (!userId || userId === 'guest_user' || !isStudiedTableAvailable) {
-      if (localWords.length > 0) return localWords;
-      return this.getTodayWords(nativeLang, targetLang, 'all', userId).then((words) => words.slice(0, 5));
+      if (localWords.length > 0) return attachImageWords(localWords);
+      return [];
     }
 
     try {
@@ -1021,8 +1050,8 @@ export class SupabaseStudyRepository implements IStudyRepository {
         .range(offset, offset + limit - 1);
 
       if (studiedErr || !studiedData || studiedData.length === 0) {
-        if (localWords.length > 0) return localWords;
-        return this.getTodayWords(nativeLang, targetLang, 'all', userId).then((words) => words.slice(0, 5));
+        if (localWords.length > 0) return attachImageWords(localWords);
+        return [];
       }
 
       const conceptIds = studiedData.map((d: any) => d.concept_id).filter(Boolean);
@@ -1037,7 +1066,7 @@ export class SupabaseStudyRepository implements IStudyRepository {
       const vocabData = await fetchVocabulariesByIdsOrConcepts(conceptIds);
 
       if (!vocabData || vocabData.length === 0) {
-        return this.getTodayWords(nativeLang, targetLang, 'all', userId).then((words) => words.slice(0, 5));
+        return [];
       }
 
       return vocabData.map((row: any) => ({
@@ -1045,6 +1074,8 @@ export class SupabaseStudyRepository implements IStudyRepository {
         conceptId: row.id,
         wordNative: row[`word_${nativeCode}`] || row.word_ko || row.word_en || 'Word',
         wordTarget: row[`word_${targetCode}`] || row.word_en || row.word_ko || 'Word',
+        imageWord: row.word_en || row.concept_code,
+        lessonId: row.lesson_id || null,
         phonetic: row[`phonetic_${targetCode}`] || row[`phonetic_${nativeCode}`] || null,
         exampleSentence: row[`example_${targetCode}`] || row.example_en || row.example_ko || null,
         exampleNative: row[`example_${nativeCode}`] || row.example_ko || row.example_en || null,
@@ -1060,9 +1091,68 @@ export class SupabaseStudyRepository implements IStudyRepository {
         ttsVoiceName: row.tts_voice_name || null,
       }));
     } catch (err) {
-      if (localWords.length > 0) return localWords;
-      return this.getTodayWords(nativeLang, targetLang, 'all', userId).then((words) => words.slice(0, 5));
+      if (localWords.length > 0) return attachImageWords(localWords);
+      return [];
     }
+  }
+
+
+  async getStudiedWordsCount(userId: string): Promise<number> {
+    const localWords = await getStudiedWordsFromLocal(userId);
+    if (!userId || userId === 'guest_user' || !isStudiedTableAvailable) return localWords.length;
+
+    try {
+      const { count, error } = await supabase
+        .from('user_studied_words')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId);
+
+      if (error || count === null) return localWords.length;
+      return count;
+    } catch {
+      return localWords.length;
+    }
+  }
+
+  async getLessonProgressMap(userId: string, lessonIds: string[]): Promise<Record<string, number>> {
+    const progressMap: Record<string, number> = {};
+    if (!userId || userId === 'guest_user' || lessonIds.length === 0 || !isStudiedTableAvailable) return progressMap;
+
+    try {
+      const { data: vocabularyRows, error: vocabularyError } = await supabase
+        .from('study_vocabularies')
+        .select('id, lesson_id')
+        .in('lesson_id', lessonIds);
+      if (vocabularyError || !vocabularyRows) return progressMap;
+
+      const vocabularyIds = vocabularyRows.map((row: any) => row.id).filter(Boolean);
+      if (vocabularyIds.length === 0) return progressMap;
+
+      const { data: studiedRows, error: studiedError } = await supabase
+        .from('user_studied_words')
+        .select('concept_id')
+        .eq('user_id', userId)
+        .in('concept_id', vocabularyIds);
+      if (studiedError) return progressMap;
+
+      const studiedIds = new Set((studiedRows || []).map((row: any) => row.concept_id));
+      const totals: Record<string, number> = {};
+      const completed: Record<string, number> = {};
+
+      vocabularyRows.forEach((row: any) => {
+        if (!row.lesson_id) return;
+        totals[row.lesson_id] = (totals[row.lesson_id] || 0) + 1;
+        if (studiedIds.has(row.id)) completed[row.lesson_id] = (completed[row.lesson_id] || 0) + 1;
+      });
+
+      Object.keys(totals).forEach((lessonId) => {
+        progressMap[lessonId] = Math.round(((completed[lessonId] || 0) / totals[lessonId]) * 100);
+      });
+    } catch {
+      return {};
+    }
+
+    return progressMap;
   }
 
   async getAllVocabulary(nativeLang: string = 'en', targetLang: string = 'ko', offset: number = 0, limit: number = 100): Promise<WordEntity[]> {
@@ -1091,6 +1181,7 @@ export class SupabaseStudyRepository implements IStudyRepository {
           conceptId: row.id,
           wordNative: wNative,
           wordTarget: wTarget,
+          imageWord: row.word_en || row.concept_code,
           phonetic,
           exampleSentence: exTarget,
           exampleNative: exNative,

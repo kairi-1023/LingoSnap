@@ -14,10 +14,11 @@ export const CompletionScreen: React.FC<CompletionScreenProps> = () => {
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
       <View style={{ flex: 1, paddingHorizontal: spacing.lg }}>
-        <CompletionView />
+        <CompletionView isReview={true} />
       </View>
     </SafeAreaView>
   );
 };
+
 
 export default CompletionScreen;

@@ -5,10 +5,21 @@ import { useAuthStore } from '../../../shared/stores/useAuthStore';
 import { useThemeStore } from '../../../shared/stores/useThemeStore';
 import { authService } from '../../../shared/services/authService';
 import { lessonService } from '../../../application/services/lessonService';
-import { progressService } from '../../../application/services/progressService';
+import { studyService } from '../../../shared/services/studyService';
 import { formatLanguagePairWithFlags } from '../../../shared/utils/languageUtils';
 import { useTranslation } from 'react-i18next';
 import { TabType } from '../../../shared/components/BottomTabBar';
+import { WordEntity } from '../../../domain/entities/Word';
+import { AILessonEntity } from '../../../domain/entities/AILesson';
+
+
+const getLessonOrder = (lesson: AILessonEntity) => {
+  const title = lesson.titleEn || lesson.title || '';
+  const lessonNumber = title.match(/lesson\s*\:?\s*(\d+)/i)?.[1];
+  if (lessonNumber) return Number(lessonNumber);
+  if (lesson.displayOrder && lesson.displayOrder > 0) return lesson.displayOrder;
+  return Number.MAX_SAFE_INTEGER;
+};
 
 export function useHomeScreen() {
   const router = useRouter();
@@ -51,39 +62,43 @@ export function useHomeScreen() {
     staleTime: 1000 * 60 * 5,
   });
 
-  // 2. TanStack Query: Fetch Progresses for User Lessons
-  const { data: userProgresses = [] } = useQuery({
-    queryKey: ['userProgresses', user?.id],
-    queryFn: () => (user?.id ? progressService.getAllProgress(user.id) : Promise.resolve([])),
+  // 2. Calculate lesson progress from actual vocabulary/studied-word tables.
+  const { data: lessonProgressMap = {} } = useQuery<Record<string, number>>({
+    queryKey: ['lessonProgressMap', user?.id, lessons.map((lesson) => lesson.id)],
+    queryFn: () => user?.id
+      ? studyService.fetchLessonProgressMap(user.id, lessons.map((lesson) => lesson.id))
+      : Promise.resolve({}),
     enabled: !!user?.id && lessons.length > 0,
     staleTime: 1000 * 60 * 5,
   });
 
-  // Map progress percent per lesson
-  const lessonProgressMap = useMemo(() => {
-    const map: Record<string, number> = {};
-    userProgresses.forEach((p) => {
-      if (p.lessonId) {
-        map[p.lessonId] = p.quizScore || (p.completedCount > 0 ? 100 : 0);
-      }
-    });
-    return map;
-  }, [userProgresses]);
+  const { data: learnedWords = [], isLoading: isLearnedWordsLoading } = useQuery({
+    queryKey: ['homeLearnedWords', user?.id, user?.nativeLang, user?.targetLang],
+    queryFn: () => user?.id
+      ? studyService.fetchStudiedWords(user.id, user.nativeLang, user.targetLang, 0, 20)
+      : Promise.resolve([]),
+    enabled: !!user?.id,
+    staleTime: 1000 * 60,
+  });
 
   const sortedLessons = useMemo(() => {
     return [...lessons].sort((a, b) => {
       const aProgress = lessonProgressMap[a.id] || 0;
       const bProgress = lessonProgressMap[b.id] || 0;
-      const aCompleted = !!a.completedAt || aProgress >= 100;
-      const bCompleted = !!b.completedAt || bProgress >= 100;
+      const aCompleted = aProgress >= 100 || (!!user?.id && a.userId === user.id && !!a.completedAt);
+      const bCompleted = bProgress >= 100 || (!!user?.id && b.userId === user.id && !!b.completedAt);
       const aRank = aCompleted ? 2 : aProgress > 0 ? 0 : 1;
       const bRank = bCompleted ? 2 : bProgress > 0 ? 0 : 1;
 
       if (aRank !== bRank) return aRank - bRank;
-      if (a.displayOrder !== b.displayOrder) return a.displayOrder - b.displayOrder;
+      const aOrder = getLessonOrder(a);
+      const bOrder = getLessonOrder(b);
+      if (aOrder !== bOrder) return aOrder - bOrder;
       return a.createdAt.localeCompare(b.createdAt);
     });
-  }, [lessons, lessonProgressMap]);
+  }, [lessons, lessonProgressMap, user?.id]);
+
+
 
   const userFirstName = useMemo(
     () => (user?.displayName ? user.displayName.split(' ')[0] : user?.email?.split('@')[0] || 'User'),
@@ -99,6 +114,17 @@ export function useHomeScreen() {
         pathname: '/(tabs)/study',
         params: { lessonId },
       });
+    },
+    [router]
+  );
+
+  const handleSelectLearnedWord = useCallback(
+    (word: WordEntity) => {
+      if (word.lessonId) {
+        router.push({ pathname: '/(tabs)/study', params: { lessonId: word.lessonId } });
+      } else {
+        router.push({ pathname: '/(tabs)/study', params: { tab: 'review' } });
+      }
     },
     [router]
   );
@@ -126,6 +152,8 @@ export function useHomeScreen() {
 
     lessons: sortedLessons,
     lessonProgressMap,
+    learnedWords,
+    isLearnedWordsLoading,
     isLessonsLoading,
     isLessonsError,
     refetchLessons,
@@ -135,6 +163,7 @@ export function useHomeScreen() {
 
     handleSaveLanguage,
     handleSelectLesson,
+    handleSelectLearnedWord,
     handleTabPress,
     router,
   };

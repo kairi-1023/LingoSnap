@@ -43,8 +43,6 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = React.memo(({
   const theme = useThemeStore((state) => state.theme);
 
   return (
-    // Bottom edge only: adds gesture-nav / home-indicator inset padding without
-    // inflating the bar height with a top inset. Works on both iOS and Android.
     <SafeAreaView edges={['bottom']} style={[styles.safeArea, { backgroundColor: theme.cardBackground }]}>
       <View
         style={[
@@ -73,9 +71,9 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = React.memo(({
             >
               <View style={styles.iconContainer}>
                 <IconComponent
-                  size={24}
+                  size={23}
                   color={iconColor}
-                  strokeWidth={isActive ? 2.8 : 1.6}
+                  strokeWidth={isActive ? 2.6 : 1.7}
                   fill="none"
                 />
               </View>
@@ -85,7 +83,7 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = React.memo(({
                   styles.tabLabel,
                   {
                     color: iconColor,
-                    fontWeight: isActive ? '700' : '400',
+                    fontWeight: isActive ? '700' : '500',
                   },
                 ]}
               >
@@ -111,36 +109,38 @@ const styles = StyleSheet.create({
   },
   container: {
     flexDirection: 'row',
-    minHeight: 64,
+    minHeight: 62,
     alignItems: 'center',
     justifyContent: 'space-around',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: 8,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 6,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     borderTopWidth: 1,
     shadowColor: '#2F3437',
     shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
     elevation: 8,
   },
   tabButton: {
     flex: 1,
+    minHeight: 48,
     alignItems: 'center',
     justifyContent: 'center',
   },
   iconContainer: {
-    marginBottom: 4,
+    marginBottom: 3,
     alignItems: 'center',
     justifyContent: 'center',
   },
   tabLabel: {
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 11,
+    lineHeight: 14,
     letterSpacing: -0.1,
   },
 });
+
 
 export default BottomTabBar;
 

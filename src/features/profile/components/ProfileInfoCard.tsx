@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
-import { Camera, Edit2, Sparkles, ChevronRight } from 'lucide-react-native';
+import { Camera, Edit2, Sparkles, ChevronRight, BookOpen } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { colors } from '../../../shared/theme/colors';
 import { spacing } from '../../../shared/theme/spacing';
 import { Typography } from '../../../shared/components/Typography';
@@ -16,6 +17,7 @@ interface ProfileInfoCardProps {
   userInitials: string;
   nativeLang: string;
   targetLang: string;
+  learnedCount: number;
   onOpenAvatarModal: () => void;
   onOpenNameModal: () => void;
   onGuestSignIn: () => void;
@@ -28,10 +30,12 @@ export const ProfileInfoCard: React.FC<ProfileInfoCardProps> = ({
   userInitials,
   nativeLang,
   targetLang,
+  learnedCount,
   onOpenAvatarModal,
   onOpenNameModal,
   onGuestSignIn,
 }) => {
+  const { t } = useTranslation();
   return (
     <>
       <View style={[styles.profileCard, { backgroundColor: theme.cardBackground, borderColor: theme.border }]}>
@@ -65,6 +69,16 @@ export const ProfileInfoCard: React.FC<ProfileInfoCardProps> = ({
               {nativeLang} ➔ {targetLang}
             </Typography>
           </View>
+        </View>
+
+        <View style={[styles.learnedRow, { backgroundColor: theme.fillSubtle, borderColor: theme.border }]}>
+          <BookOpen size={16} color={theme.textSecondary} />
+          <Typography variant="caption" style={{ color: theme.textSecondary, marginLeft: 6, fontSize: 14, lineHeight: 20 }}>
+            {t('profile.learnedWords', '학습 단어')}
+          </Typography>
+          <Typography variant="cardTitle" style={{ color: theme.primary, marginLeft: 6, fontSize: 18, lineHeight: 22 }}>
+            {learnedCount}
+          </Typography>
         </View>
       </View>
 
@@ -144,6 +158,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     marginTop: 10,
+  },
+  learnedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    marginTop: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 14,
+    borderWidth: 1,
   },
   levelBadge: {
     flexDirection: 'row',

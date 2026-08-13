@@ -41,8 +41,13 @@ function normalizeWord(raw: string): string {
   const lower = raw.toLowerCase().trim();
   if (WORD_NORMALIZE_MAP[lower]) return WORD_NORMALIZE_MAP[lower];
 
-  for (const [key, canonical] of Object.entries(WORD_NORMALIZE_MAP)) {
-    if (lower.includes(key)) return canonical;
+  const tokens = lower.split(/[^a-z0-9]+/).filter(Boolean);
+  for (const [key, canonical] of Object.entries(WORD_NORMALIZE_MAP).sort(
+    ([left], [right]) => right.length - left.length
+  )) {
+    // Only aliases longer than one character may match a concept token.
+    // This prevents the standalone pronoun "i" from matching "drink".
+    if (key.length > 1 && tokens.includes(key)) return canonical;
   }
 
   return lower;

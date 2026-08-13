@@ -161,8 +161,7 @@ export const StudyScreen: React.FC = React.memo(() => {
       <ImageLessonScreen
         lessonId={params.lessonId}
         onBack={() => {
-          if (router.canGoBack()) router.back();
-          else router.replace('/(tabs)');
+          router.replace('/(tabs)/study');
         }}
         onNavigateToQuiz={() => router.push({ pathname: '/quiz', params: { lessonId: params.lessonId } })}
       />

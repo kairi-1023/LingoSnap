@@ -63,21 +63,29 @@ export class AILessonRepository implements IAILessonRepository {
       const lessons = data.map(mapRowToLessonEntity);
       const { data: linkedVocabularies, error: linkError } = await supabase
         .from('study_vocabularies')
-        .select('lesson_id')
+        .select('lesson_id, word_en, concept_code, created_at')
+        .order('created_at', { ascending: true })
         .not('lesson_id', 'is', null);
 
       // Keep the lesson list usable if the vocabulary metadata query fails.
       if (linkError || !linkedVocabularies) return lessons;
 
-      const linkedLessonIds = new Set(
-        linkedVocabularies
-          .map((row: any) => row.lesson_id)
-          .filter(Boolean)
-      );
+      const linkedLessonIds = new Set<string>();
+      const representativeWords = new Map<string, string>();
+      linkedVocabularies.forEach((row: any) => {
+        if (!row.lesson_id) return;
+        linkedLessonIds.add(row.lesson_id);
+        if (!representativeWords.has(row.lesson_id)) {
+          representativeWords.set(row.lesson_id, row.word_en || row.concept_code);
+        }
+      });
 
       return lessons.filter(
         (lesson) => linkedLessonIds.has(lesson.id) && lesson.id !== '11111111-1111-1111-1111-111111111111'
-      );
+      ).map((lesson) => ({
+        ...lesson,
+        representativeWord: representativeWords.get(lesson.id) || null,
+      }));
     } catch {
       return [];
     }

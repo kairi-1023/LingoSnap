@@ -42,10 +42,10 @@ export const HomeHeader: React.FC<HomeHeaderProps> = React.memo(({
         accessibilityRole="button"
       >
         <View style={styles.avatarContainer}>
-          <Avatar size={36} imageUrl={userAvatarUrl} fallbackText={userInitials} bgColor={colors.primary} textColor="#FFFFFF" borderColor={theme.background} borderWidth={2} />
+          <Avatar size={34} imageUrl={userAvatarUrl} fallbackText={userInitials} bgColor={colors.primary} textColor="#FFFFFF" borderColor={theme.background} borderWidth={2} />
         </View>
 
-        <Typography variant="cardTitle" color="textPrimary" numberOfLines={1}>
+        <Typography variant="cardTitle" color="textPrimary" numberOfLines={1} style={styles.headerUserName}>
           {userName}
         </Typography>
       </TouchableOpacity>
@@ -60,9 +60,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingTop: 10,
-    paddingBottom: 14,
+    paddingHorizontal: spacing.md,
+    paddingTop: 8,
+    paddingBottom: 6,
   },
   leftSection: {
     flexDirection: 'row',
@@ -71,7 +71,11 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
   },
   avatarContainer: {
-    marginRight: 10,
+    marginRight: 8,
+  },
+  headerUserName: {
+    fontSize: 16,
+    fontWeight: '700',
   },
 });
 

@@ -1,101 +1,100 @@
-table_schema,table_name,ordinal_position,column_name,data_type,is_nullable,column_default
-auth,audit_log_entries,1,instance_id,uuid,YES,null
-auth,audit_log_entries,2,id,uuid,NO,null
-auth,audit_log_entries,3,payload,json,YES,null
-auth,audit_log_entries,4,created_at,timestamp with time zone,YES,null
-auth,audit_log_entries,5,ip_address,character varying,NO,''::character varying
-auth,custom_oauth_providers,1,id,uuid,NO,gen_random_uuid()
-auth,custom_oauth_providers,2,provider_type,text,NO,null
-auth,custom_oauth_providers,3,identifier,text,NO,null
-auth,custom_oauth_providers,4,name,text,NO,null
-auth,custom_oauth_providers,5,client_id,text,NO,null
-auth,custom_oauth_providers,6,client_secret,text,NO,null
-auth,custom_oauth_providers,7,acceptable_client_ids,ARRAY,NO,'{}'::text[]
-auth,custom_oauth_providers,8,scopes,ARRAY,NO,'{}'::text[]
-auth,custom_oauth_providers,9,pkce_enabled,boolean,NO,true
-auth,custom_oauth_providers,10,attribute_mapping,jsonb,NO,'{}'::jsonb
-auth,custom_oauth_providers,11,authorization_params,jsonb,NO,'{}'::jsonb
-auth,custom_oauth_providers,12,enabled,boolean,NO,true
-auth,custom_oauth_providers,13,email_optional,boolean,NO,false
-auth,custom_oauth_providers,14,issuer,text,YES,null
-auth,custom_oauth_providers,15,discovery_url,text,YES,null
-auth,custom_oauth_providers,16,skip_nonce_check,boolean,NO,false
-auth,custom_oauth_providers,17,cached_discovery,jsonb,YES,null
-auth,custom_oauth_providers,18,discovery_cached_at,timestamp with time zone,YES,null
-auth,custom_oauth_providers,19,authorization_url,text,YES,null
-auth,custom_oauth_providers,20,token_url,text,YES,null
-auth,custom_oauth_providers,21,userinfo_url,text,YES,null
-auth,custom_oauth_providers,22,jwks_uri,text,YES,null
-auth,custom_oauth_providers,23,created_at,timestamp with time zone,NO,now()
-auth,custom_oauth_providers,24,updated_at,timestamp with time zone,NO,now()
-auth,custom_oauth_providers,25,custom_claims_allowlist,ARRAY,NO,'{}'::text[]
-auth,flow_state,1,id,uuid,NO,null
-auth,flow_state,2,user_id,uuid,YES,null
-auth,flow_state,3,auth_code,text,YES,null
-auth,flow_state,4,code_challenge_method,USER-DEFINED,YES,null
-auth,flow_state,5,code_challenge,text,YES,null
-auth,flow_state,6,provider_type,text,NO,null
-auth,flow_state,7,provider_access_token,text,YES,null
-auth,flow_state,8,provider_refresh_token,text,YES,null
-auth,flow_state,9,created_at,timestamp with time zone,YES,null
-auth,flow_state,10,updated_at,timestamp with time zone,YES,null
-auth,flow_state,11,authentication_method,text,NO,null
-auth,flow_state,12,auth_code_issued_at,timestamp with time zone,YES,null
-auth,flow_state,13,invite_token,text,YES,null
-auth,flow_state,14,referrer,text,YES,null
-auth,flow_state,15,oauth_client_state_id,uuid,YES,null
-auth,flow_state,16,linking_target_id,uuid,YES,null
-auth,flow_state,17,email_optional,boolean,NO,false
-auth,identities,1,provider_id,text,NO,null
-auth,identities,2,user_id,uuid,NO,null
-auth,identities,3,identity_data,jsonb,NO,null
-auth,identities,4,provider,text,NO,null
-auth,identities,5,last_sign_in_at,timestamp with time zone,YES,null
-auth,identities,6,created_at,timestamp with time zone,YES,null
-auth,identities,7,updated_at,timestamp with time zone,YES,null
-auth,identities,8,email,text,YES,null
-auth,identities,9,id,uuid,NO,gen_random_uuid()
-auth,instances,1,id,uuid,NO,null
-auth,instances,2,uuid,uuid,YES,null
-auth,instances,3,raw_base_config,text,YES,null
-auth,instances,4,created_at,timestamp with time zone,YES,null
-auth,instances,5,updated_at,timestamp with time zone,YES,null
-auth,mfa_amr_claims,1,session_id,uuid,NO,null
-auth,mfa_amr_claims,2,created_at,timestamp with time zone,NO,null
-auth,mfa_amr_claims,3,updated_at,timestamp with time zone,NO,null
-auth,mfa_amr_claims,4,authentication_method,text,NO,null
-auth,mfa_amr_claims,5,id,uuid,NO,null
-auth,mfa_challenges,1,id,uuid,NO,null
-auth,mfa_challenges,2,factor_id,uuid,NO,null
-auth,mfa_challenges,3,created_at,timestamp with time zone,NO,null
-auth,mfa_challenges,4,verified_at,timestamp with time zone,YES,null
-auth,mfa_challenges,5,ip_address,inet,NO,null
-auth,mfa_challenges,6,otp_code,text,YES,null
-auth,mfa_challenges,7,web_authn_session_data,jsonb,YES,null
-auth,mfa_factors,1,id,uuid,NO,null
-auth,mfa_factors,2,user_id,uuid,NO,null
-auth,mfa_factors,3,friendly_name,text,YES,null
-auth,mfa_factors,4,factor_type,USER-DEFINED,NO,null
-auth,mfa_factors,5,status,USER-DEFINED,NO,null
-auth,mfa_factors,6,created_at,timestamp with time zone,NO,null
-auth,mfa_factors,7,updated_at,timestamp with time zone,NO,null
-auth,mfa_factors,8,secret,text,YES,null
-auth,mfa_factors,9,phone,text,YES,null
-auth,mfa_factors,10,last_challenged_at,timestamp with time zone,YES,null
-auth,mfa_factors,11,web_authn_credential,jsonb,YES,null
-auth,mfa_factors,12,web_authn_aaguid,uuid,YES,null
-auth,mfa_factors,13,last_webauthn_challenge_data,jsonb,YES,null
-auth,oauth_authorizations,1,id,uuid,NO,null
-auth,oauth_authorizations,2,authorization_id,text,NO,null
-auth,oauth_authorizations,3,client_id,uuid,NO,null
-auth,oauth_authorizations,4,user_id,uuid,YES,null
-auth,oauth_authorizations,5,redirect_uri,text,NO,null
-auth,oauth_authorizations,6,scope,text,NO,null
-auth,oauth_authorizations,7,state,text,YES,null
-auth,oauth_authorizations,8,resource,text,YES,null
-auth,oauth_authorizations,9,code_challenge,text,YES,null
-auth,oauth_authorizations,10,code_challenge_method,USER-DEFINED,YES,null
-auth,oauth_authorizations,11,response_type,USER-DEFINED,NO,'code'::auth.oauth_response_type
-auth,oauth_authorizations,12,status,USER-DEFINED,NO,'pending'::auth.oauth_authorization_status
-auth,oauth_authorizations,13,authorization_code,text,YES,null
-auth,oauth_authorizations,14,created_at,timestamp with time zone,NO,now()
+table_name,ordinal_position,column_name,data_type,is_nullable,column_default
+ai_lessons,1,id,uuid,NO,gen_random_uuid()
+ai_lessons,2,user_id,uuid,YES,null
+ai_lessons,3,image_url,text,NO,null
+ai_lessons,4,ai_caption,text,YES,null
+ai_lessons,5,created_at,timestamp with time zone,NO,now()
+ai_lessons,6,title,character varying,YES,'Beginner Lesson'::character varying
+ai_lessons,7,description,text,YES,null
+ai_lessons,8,completed_at,timestamp with time zone,YES,null
+ai_lessons,9,title_ko,character varying,YES,null
+ai_lessons,10,title_en,character varying,YES,null
+ai_lessons,11,description_ko,text,YES,null
+ai_lessons,12,description_en,text,YES,null
+ai_lessons,13,title_tl,character varying,YES,null
+ai_lessons,14,description_tl,text,YES,null
+ai_quiz_questions,1,id,uuid,NO,gen_random_uuid()
+ai_quiz_questions,2,quiz_id,uuid,NO,null
+ai_quiz_questions,3,type,text,NO,null
+ai_quiz_questions,4,question_text,text,NO,null
+ai_quiz_questions,5,options,jsonb,NO,null
+ai_quiz_questions,6,correct_answer,text,NO,null
+ai_quiz_questions,7,created_at,timestamp with time zone,NO,now()
+ai_quizzes,1,id,uuid,NO,gen_random_uuid()
+ai_quizzes,2,lesson_id,uuid,NO,null
+ai_quizzes,3,created_at,timestamp with time zone,NO,now()
+ai_review_items,1,id,uuid,NO,gen_random_uuid()
+ai_review_items,2,user_id,uuid,NO,null
+ai_review_items,3,vocabulary_id,uuid,NO,null
+ai_review_items,4,srs_stage,integer,NO,1
+ai_review_items,5,next_review_at,timestamp with time zone,NO,null
+ai_review_items,6,last_reviewed_at,timestamp with time zone,YES,null
+ai_review_items,7,review_count,integer,NO,0
+ai_review_items,8,wrong_count,integer,NO,0
+ai_review_items,9,created_at,timestamp with time zone,NO,now()
+ai_user_progress,1,user_id,uuid,NO,null
+ai_user_progress,2,current_streak,integer,NO,0
+ai_user_progress,3,last_study_at,timestamp with time zone,YES,null
+ai_user_progress,4,total_learned_count,integer,NO,0
+ai_user_progress,5,updated_at,timestamp with time zone,NO,now()
+favorite_words,1,id,uuid,NO,gen_random_uuid()
+favorite_words,2,user_id,uuid,NO,null
+favorite_words,3,word_id,uuid,NO,null
+favorite_words,4,created_at,timestamp with time zone,YES,now()
+study_logs,1,id,uuid,NO,gen_random_uuid()
+study_logs,2,user_id,uuid,NO,null
+study_logs,3,couple_id,character varying,YES,null
+study_logs,4,local_date,character varying,NO,null
+study_logs,5,xp_gained,integer,YES,20
+study_logs,6,concept_ids,jsonb,YES,'[]'::jsonb
+study_logs,7,completed_at,timestamp with time zone,YES,now()
+study_logs,8,created_at,timestamp with time zone,YES,now()
+study_vocabularies,1,id,uuid,NO,gen_random_uuid()
+study_vocabularies,2,lesson_id,uuid,YES,null
+study_vocabularies,3,concept_code,character varying,NO,null
+study_vocabularies,4,category,character varying,NO,'daily'::character varying
+study_vocabularies,5,difficulty_level,character varying,NO,'A1'::character varying
+study_vocabularies,7,word_en,text,YES,null
+study_vocabularies,8,word_ko,text,YES,null
+study_vocabularies,9,word_tl,text,YES,null
+study_vocabularies,13,example_en,text,YES,null
+study_vocabularies,14,example_ko,text,YES,null
+study_vocabularies,15,example_tl,text,YES,null
+study_vocabularies,19,phonetic_en,text,YES,null
+study_vocabularies,20,phonetic_ko,text,YES,null
+study_vocabularies,21,phonetic_tl,text,YES,null
+study_vocabularies,26,image_source,character varying,YES,'manual'::character varying
+study_vocabularies,28,tts_audio_url,text,YES,null
+study_vocabularies,29,created_at,timestamp with time zone,YES,now()
+user_streaks,1,id,uuid,NO,gen_random_uuid()
+user_streaks,2,user_id,uuid,YES,null
+user_streaks,3,couple_id,character varying,YES,null
+user_streaks,4,current_streak,integer,YES,0
+user_streaks,5,last_study_date,character varying,YES,null
+user_streaks,6,freeze_count,integer,YES,1
+user_streaks,7,last_freeze_used_at,timestamp with time zone,YES,null
+user_streaks,8,user1_completed_today,boolean,YES,false
+user_streaks,9,user2_completed_today,boolean,YES,false
+user_streaks,10,created_at,timestamp with time zone,YES,now()
+user_streaks,11,updated_at,timestamp with time zone,YES,now()
+user_studied_words,1,id,uuid,NO,gen_random_uuid()
+user_studied_words,2,user_id,uuid,NO,null
+user_studied_words,3,concept_id,uuid,YES,null
+user_studied_words,4,srs_stage,integer,YES,1
+user_studied_words,5,next_review_at,timestamp with time zone,YES,(now() + '1 day'::interval)
+user_studied_words,6,last_reviewed_at,timestamp with time zone,YES,now()
+user_studied_words,7,review_count,integer,YES,0
+user_studied_words,8,wrong_count,integer,YES,0
+user_studied_words,9,created_at,timestamp with time zone,YES,now()
+user_studied_words,10,updated_at,timestamp with time zone,YES,now()
+users,1,id,uuid,NO,null
+users,2,email,text,NO,null
+users,3,display_name,text,YES,null
+users,4,avatar_url,text,YES,null
+users,5,native_lang,character varying,NO,'ko'::character varying
+users,6,target_lang,character varying,NO,'en'::character varying
+users,7,push_token,text,YES,null
+users,8,xp,integer,YES,0
+users,9,created_at,timestamp with time zone,NO,now()
+users,10,updated_at,timestamp with time zone,YES,now()
+users,11,current_couple_id,uuid,YES,null

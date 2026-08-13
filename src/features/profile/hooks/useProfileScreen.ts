@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../../shared/stores/useAuthStore';
-import { useStudyStore } from '../../../shared/stores/useStudyStore';
 import { useThemeStore } from '../../../shared/stores/useThemeStore';
 import { useSettingsStore } from '../../../shared/stores/useSettingsStore';
 import { authService } from '../../../shared/services/authService';
+import { studyService } from '../../../shared/services/studyService';
 import { getLanguageDisplay } from '../../../shared/constants/languages';
 import { TabType } from '../../../shared/components/BottomTabBar';
 import { useTranslation } from 'react-i18next';
@@ -22,13 +22,25 @@ export function useProfileScreen() {
 
   // Zustand Atomic Selectors
   const user = useAuthStore((state) => state.user);
-
-  const xpEarned = useStudyStore((state) => state.xpEarned);
-  const todayWords = useStudyStore((state) => state.todayWords);
+  const [learnedCount, setLearnedCount] = useState(0);
 
   const isDarkMode = useThemeStore((state) => state.isDarkMode);
   const toggleDarkMode = useThemeStore((state) => state.toggleDarkMode);
   const theme = useThemeStore((state) => state.theme);
+
+  useEffect(() => {
+    let isActive = true;
+    if (!user?.id) {
+      setLearnedCount(0);
+      return () => { isActive = false; };
+    }
+
+    studyService.fetchStudiedWordsCount(user.id).then((count) => {
+      if (isActive) setLearnedCount(count);
+    }).catch(() => {});
+
+    return () => { isActive = false; };
+  }, [user?.id]);
 
   const isMountedRef = useRef(true);
   const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -197,8 +209,7 @@ export function useProfileScreen() {
 
   return {
     user,
-    xpEarned,
-    todayWords,
+    learnedCount,
     isDarkMode,
     toggleDarkMode,
     theme,

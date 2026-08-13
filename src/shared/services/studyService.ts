@@ -173,6 +173,17 @@ export class StudyService {
     return studyRepository.getStudiedWords(userId, resolvedNative, resolvedTarget, offset, limit);
   }
 
+  async fetchStudiedWordsCount(userId?: string): Promise<number> {
+    const user = useAuthStore.getState().user;
+    const resolvedUserId = userId || user?.id;
+    if (!resolvedUserId) return 0;
+    return studyRepository.getStudiedWordsCount(resolvedUserId);
+  }
+
+  async fetchLessonProgressMap(userId: string, lessonIds: string[]): Promise<Record<string, number>> {
+    return studyRepository.getLessonProgressMap(userId, lessonIds);
+  }
+
   async getAllVocabulary(nativeLang?: string, targetLang?: string, offset?: number, limit?: number) {
     const user = useAuthStore.getState().user;
     const resolvedNative = nativeLang || user?.nativeLang || 'ko';

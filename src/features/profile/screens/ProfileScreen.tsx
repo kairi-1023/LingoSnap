@@ -17,7 +17,6 @@ import { LanguageSelectModal } from '../../../shared/components/LanguageSelectMo
 import { LanguageDisplaySelect } from '../../../shared/components/LanguageDisplaySelect';
 import { authService } from '../../../shared/services/authService';
 import { ProfileInfoCard } from '../components/ProfileInfoCard';
-import { ProfileStatsCards } from '../components/ProfileStatsCards';
 import { ProfileModals } from '../components/ProfileModals';
 import { SettingsSection } from '../components/SettingsSection';
 import { AccountSection } from '../components/AccountSection';
@@ -39,8 +38,7 @@ export const ProfileScreen: React.FC = React.memo(() => {
 
   const {
     user,
-    xpEarned,
-    todayWords,
+    learnedCount,
     isDarkMode,
     theme,
     themeColors,
@@ -154,12 +152,11 @@ export const ProfileScreen: React.FC = React.memo(() => {
           userInitials={userInitials}
           nativeLang={nativeLang}
           targetLang={targetLang}
+          learnedCount={learnedCount}
           onOpenAvatarModal={handleOpenAvatarModal}
           onOpenNameModal={handleOpenNameModal}
           onGuestSignIn={() => setIsGuestModalVisible(true)}
         />
-
-        <ProfileStatsCards theme={theme} xpEarned={xpEarned} todayWordsLength={todayWords.length} />
 
         <SettingsSection
           theme={theme}

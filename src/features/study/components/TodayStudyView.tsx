@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
+
 import { BookOpen } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -15,6 +16,7 @@ export const TodayStudyView: React.FC = React.memo(() => {
   const { t } = useTranslation();
 
   const {
+    user,
     theme,
     lessons,
     lessonProgressMap,
@@ -23,6 +25,50 @@ export const TodayStudyView: React.FC = React.memo(() => {
     refetchLessons,
     handleSelectLesson,
   } = useHomeScreen();
+
+
+  const getLessonOrder = (lesson: typeof lessons[number]) => {
+    const title = lesson.titleEn || lesson.title || '';
+    const lessonNumber = title.match(/lesson\s*\:?\s*(\d+)/i)?.[1];
+    return lessonNumber ? Number(lessonNumber) : lesson.displayOrder || Number.MAX_SAFE_INTEGER;
+  };
+
+  const sortByLessonOrder = (a: typeof lessons[number], b: typeof lessons[number]) => {
+    const aOrder = getLessonOrder(a);
+    const bOrder = getLessonOrder(b);
+    if (aOrder !== bOrder) return aOrder - bOrder;
+    return a.createdAt.localeCompare(b.createdAt);
+  };
+
+  const isLessonCompleted = useCallback(
+    (lesson: typeof lessons[number]) => {
+      const progress = lessonProgressMap[lesson.id] || 0;
+      if (progress >= 100) return true;
+      if (lesson.userId && user?.id && lesson.userId === user.id && !!lesson.completedAt) return true;
+      return false;
+    },
+    [lessonProgressMap, user?.id]
+  );
+
+  const incompleteLessons = lessons
+    .filter((lesson) => !isLessonCompleted(lesson))
+    .sort(sortByLessonOrder);
+  const completedLessons = lessons
+    .filter((lesson) => isLessonCompleted(lesson))
+    .sort(sortByLessonOrder);
+
+
+  const renderLessonCard = (lesson: typeof lessons[number]) => (
+    <LessonCard
+      key={lesson.id}
+      lesson={lesson}
+      progressPercent={lessonProgressMap[lesson.id] || 0}
+      theme={theme}
+      variant="simple"
+      onSelectLesson={handleSelectLesson}
+    />
+  );
+
 
   return (
     <ScrollView
@@ -63,17 +109,25 @@ export const TodayStudyView: React.FC = React.memo(() => {
             onAction={refetchLessons}
           />
         ) : (
-          <View style={styles.lessonList}>
-            {lessons.map((lesson) => (
-              <LessonCard
-                key={lesson.id}
-                lesson={lesson}
-                progressPercent={lessonProgressMap[lesson.id] || 0}
-                theme={theme}
-                onSelectLesson={handleSelectLesson}
-              />
-            ))}
-          </View>
+          <>
+            {incompleteLessons.length > 0 && (
+              <View style={styles.lessonGroup}>
+                <Typography variant="cardTitle" style={[styles.groupTitle, { color: theme.textPrimary }]}>
+                  {t('study.incompleteLessons')}
+                </Typography>
+                <View style={styles.lessonList}>{incompleteLessons.map(renderLessonCard)}</View>
+              </View>
+            )}
+
+            {completedLessons.length > 0 && (
+              <View style={styles.lessonGroup}>
+                <Typography variant="cardTitle" style={[styles.groupTitle, { color: theme.textPrimary }]}>
+                  {t('study.completedLessons')}
+                </Typography>
+                <View style={styles.lessonList}>{completedLessons.map(renderLessonCard)}</View>
+              </View>
+            )}
+          </>
         )}
       </View>
     </ScrollView>
@@ -99,6 +153,12 @@ const styles = StyleSheet.create({
   },
   lessonList: {
     gap: spacing.sm,
+  },
+  lessonGroup: {
+    marginBottom: spacing.lg,
+  },
+  groupTitle: {
+    marginBottom: spacing.sm,
   },
 });
 

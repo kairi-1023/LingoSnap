@@ -13,9 +13,10 @@ import { useThemeStore } from '../../../shared/stores/useThemeStore';
 
 interface CompletionViewProps {
   onRestart?: () => void;
+  isReview?: boolean;
 }
 
-export const CompletionView: React.FC<CompletionViewProps> = React.memo(({ onRestart }) => {
+export const CompletionView: React.FC<CompletionViewProps> = React.memo(({ onRestart, isReview = false }) => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const xpEarned = useStudyStore((state) => state.xpEarned);
@@ -65,7 +66,9 @@ export const CompletionView: React.FC<CompletionViewProps> = React.memo(({ onRes
             </Typography>
 
             <Typography variant="caption" color="textSecondary" align="center" style={styles.resultSubtitle}>
-              {t('study.completionSolo', 'You completed today\'s 5-minute study!')}
+              {isReview
+                ? t('study.completionReview', '오늘의 복습을 모두 완료했습니다!')
+                : t('study.completionSolo', '오늘의 5분 학습을 완료했습니다!')}
             </Typography>
 
             {/* 3. Refined Stat Cards Grid */}
@@ -83,21 +86,24 @@ export const CompletionView: React.FC<CompletionViewProps> = React.memo(({ onRes
                 </Typography>
               </View>
 
-              {/* Stat 2: XP Gained */}
-              <View style={[styles.statCard, { backgroundColor: theme.cardBackground, borderColor: theme.border }]}>
-                <View style={[styles.statIconBadge, { backgroundColor: theme.streakBg }]}>
-                  <Sparkles size={20} color={colors.secondary} />
+              {/* Stat 2: XP Gained (복습 화면일 때는 카드 제거) */}
+              {!isReview && (
+                <View style={[styles.statCard, { backgroundColor: theme.cardBackground, borderColor: theme.border }]}>
+                  <View style={[styles.statIconBadge, { backgroundColor: theme.streakBg }]}>
+                    <Sparkles size={20} color={colors.secondary} />
+                  </View>
+                  <Typography variant="cardTitle" color="textPrimary" style={styles.statValue} align="center">
+                    +{gainedXp} XP
+                  </Typography>
+                  <Typography variant="caption" color="textSecondary" align="center">
+                    {t('study.xpEarnedLabel', 'XP Gained')}
+                  </Typography>
                 </View>
-                <Typography variant="cardTitle" color="textPrimary" style={styles.statValue} align="center">
-                  +{gainedXp} XP
-                </Typography>
-                <Typography variant="caption" color="textSecondary" align="center">
-                  {t('study.xpEarnedLabel', 'XP Gained')}
-                </Typography>
-              </View>
+              )}
             </View>
           </View>
         </View>
+
 
         {/* 4. Action Buttons */}
         <View style={styles.buttonGroup}>
