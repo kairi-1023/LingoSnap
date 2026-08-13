@@ -196,43 +196,6 @@ export class SupabaseAuthRepository implements IAuthRepository {
     throw new OAuthSessionError('Google');
   }
 
-  async signInWithFacebook(): Promise<UserEntity | null> {
-    if (Platform.OS === 'web') {
-      const origin = typeof window !== 'undefined' ? window.location.origin : '';
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'facebook',
-        options: {
-          redirectTo: origin ? `${origin}/` : undefined,
-        },
-      });
-      if (error) {
-        throw new OAuthSessionError('Facebook', error.message);
-      }
-      return null;
-    }
-
-    const redirectTo = getRedirectTo();
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'facebook',
-      options: { redirectTo },
-    });
-    if (error) {
-      throw new OAuthSessionError('Facebook', error.message);
-    }
-
-    if (!data?.url) {
-      throw new OAuthSessionError('Facebook', 'Could not generate sign-in link. Please try again.');
-    }
-
-    const session = await openOAuthUrl(data.url, redirectTo);
-    if (session?.user) {
-      const dbUser = await this.ensurePublicUser(session.user.id, session);
-      if (dbUser) return dbUser;
-      return this.buildUserFromSession(session);
-    }
-    throw new OAuthSessionError('Facebook');
-  }
-
   async checkCurrentSession(): Promise<boolean> {
     const { data: { session }, error } = await supabase.auth.getSession();
     if (error || !session) {

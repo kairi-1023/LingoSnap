@@ -10,6 +10,7 @@ import { AILessonEntity } from '../../../domain/entities/AILesson';
 import { useSettingsStore } from '../../../shared/stores/useSettingsStore';
 import { useAuthStore } from '../../../shared/stores/useAuthStore';
 import { getVocabularyImageUrl } from '../../../shared/utils/vocabularyImageMap';
+import { Card } from '../../../shared/components/Card';
 
 
 interface LessonCardProps {
@@ -44,14 +45,13 @@ export const LessonCard: React.FC<LessonCardProps> = React.memo(({
 
   if (variant === 'simple') {
     return (
-      <View
-        style={[
-          styles.simpleContainer,
-          {
-            backgroundColor: theme.cardBackground,
-            borderColor: isStarted ? colors.primary : theme.border,
-          },
-        ]}
+      <Card
+        radius="normal"
+        padding={0}
+        bg={theme.cardBackground}
+        borderColor={isStarted ? colors.primary : theme.border}
+        elevation="soft"
+        style={styles.simpleContainer}
       >
         <Pressable
           style={({ pressed }) => [
@@ -98,19 +98,18 @@ export const LessonCard: React.FC<LessonCardProps> = React.memo(({
             )}
           </View>
         </Pressable>
-      </View>
+      </Card>
     );
   }
 
   return (
-    <View
-      style={[
-        styles.heroContainer,
-        {
-          backgroundColor: theme.isDarkMode ? theme.cardBackground : '#F4F9F4',
-          borderColor: isStarted ? colors.primary : '#D8ECD8',
-        },
-      ]}
+    <Card
+      radius="large"
+      padding={0}
+      bg={theme.isDarkMode ? theme.cardBackground : '#F4F9F4'}
+      borderColor={isStarted ? colors.primary : '#D8ECD8'}
+      elevation="medium"
+      style={styles.heroContainer}
     >
       <Pressable
         style={({ pressed }) => [
@@ -213,7 +212,7 @@ export const LessonCard: React.FC<LessonCardProps> = React.memo(({
           )}
         </View>
       </Pressable>
-    </View>
+    </Card>
   );
 });
 
@@ -222,15 +221,7 @@ LessonCard.displayName = 'LessonCard';
 
 const styles = StyleSheet.create({
   simpleContainer: {
-    borderRadius: 16,
-    borderWidth: 1,
-    overflow: 'hidden',
     marginBottom: 8,
-    elevation: 1,
-    shadowColor: '#2F3437',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
   },
   simplePressable: {
     padding: 12,
@@ -265,16 +256,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   heroContainer: {
-    borderRadius: 20,
-
-    borderWidth: 1.5,
-    overflow: 'hidden',
     marginBottom: 12,
-    elevation: 2,
-    shadowColor: '#2F3437',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
   },
   pressableInner: {
     padding: spacing.md,

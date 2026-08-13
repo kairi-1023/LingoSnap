@@ -28,7 +28,6 @@ import { useStudyStore } from '../../../shared/stores/useStudyStore';
 import { useSettingsStore } from '../../../shared/stores/useSettingsStore';
 import { useThemeStore } from '../../../shared/stores/useThemeStore';
 import { lessonService } from '../../../application/services/lessonService';
-import { progressService } from '../../../application/services/progressService';
 import { studyService } from '../../../shared/services/studyService';
 import { ttsService } from '../../../shared/services/ttsService';
 import { saveStudiedWordToLocal } from '../../../shared/utils/studiedWordStorage';
@@ -36,6 +35,8 @@ import { getVocabularyImageUrl } from '../../../shared/utils/vocabularyImageMap'
 import { parseTtsAudioUrl } from '../../../shared/utils/ttsStorage';
 import { WordEntity } from '../../../domain/entities/Word';
 import { LessonVocabulary } from '../../../domain/entities/LessonVocabulary';
+import { getLangField } from '../../../shared/utils/languageUtils';
+import { useTtsAudio } from '../../../shared/hooks/useTtsAudio';
 
 export type ScreenState = 'learning' | 'sentence_learning';
 
@@ -45,22 +46,6 @@ interface ImageLessonScreenProps {
   onNavigateToQuiz?: (lessonId: string) => void;
 }
 
-function getLangField<T extends Record<string, any>>(obj: T, prefix: string, langCode: string): string {
-  if (!obj) return '';
-  const cap = langCode.charAt(0).toUpperCase() + langCode.slice(1).toLowerCase();
-  const camelKey = `${prefix}${cap}`;
-  const snakeKey = `${prefix}_${langCode.toLowerCase()}`;
-
-  if (camelKey in obj && obj[camelKey]) return String(obj[camelKey]);
-  if (snakeKey in obj && obj[snakeKey]) return String(obj[snakeKey]);
-
-  const fallbackCamel = `${prefix}En`;
-  const fallbackSnake = `${prefix}_en`;
-  if (fallbackCamel in obj && obj[fallbackCamel]) return String(obj[fallbackCamel]);
-  if (fallbackSnake in obj && obj[fallbackSnake]) return String(obj[fallbackSnake]);
-
-  return '';
-}
 
 // IPA Pronunciation Formatting Normalizer: Guarantees 100% consistent /.../ slash format
 function formatPhonetic(rawPhonetic?: string): string {
@@ -360,9 +345,6 @@ export const ImageLessonScreen: React.FC<ImageLessonScreenProps> = React.memo(({
       try {
         if (user?.id) {
           if (lessonId) {
-            await lessonService.markLessonComplete(lessonId);
-            await progressService.updateLessonProgress(user.id, lessonId, 100);
-
             useStudyStore.getState().setTodayWords(
               lessonVocabularies.map((vocabItem): WordEntity => ({
                 id: vocabItem.vocabularyId || vocabItem.id,

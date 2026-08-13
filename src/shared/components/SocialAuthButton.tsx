@@ -1,13 +1,11 @@
 import React from 'react';
 import {
   TouchableOpacity,
-  Text,
   StyleSheet,
   ActivityIndicator,
   View,
   ViewStyle,
   TextStyle,
-  Platform,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useThemeStore } from '../stores/useThemeStore';
@@ -36,18 +34,8 @@ const GoogleSvgIcon = () => (
   </Svg>
 );
 
-// Official Facebook 'f' Icon Component
-const FacebookSvgIcon = () => (
-  <Svg width={20} height={20} viewBox="0 0 24 24">
-    <Path
-      fill="#FFFFFF"
-      d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"
-    />
-  </Svg>
-);
-
 interface SocialAuthButtonProps {
-  provider: 'google' | 'facebook';
+  provider?: 'google';
   onPress: () => void;
   loading?: boolean;
   disabled?: boolean;
@@ -55,32 +43,23 @@ interface SocialAuthButtonProps {
 }
 
 export const SocialAuthButton: React.FC<SocialAuthButtonProps> = ({
-  provider,
+  provider = 'google',
   onPress,
   loading = false,
   disabled = false,
   style,
 }) => {
   const { t } = useTranslation();
-  const { theme, isDarkMode } = useThemeStore();
-  const isGoogle = provider === 'google';
-  const fbBackground = isDarkMode ? '#1565C0' : '#1877F2';
+  const { theme } = useThemeStore();
 
-  const containerStyle: ViewStyle = isGoogle
-    ? {
-        backgroundColor: theme.cardBackground,
-        borderColor: theme.border,
-        borderWidth: 1,
-      }
-    : {
-        backgroundColor: fbBackground,
-      };
+  const containerStyle: ViewStyle = {
+    backgroundColor: theme.cardBackground,
+    borderColor: theme.border,
+    borderWidth: 1,
+  };
 
-  const textStyle: TextStyle = isGoogle
-    ? { color: theme.textPrimary }
-    : { color: '#FFFFFF' };
-
-  const label = isGoogle ? t('auth.googleSignIn') : t('auth.facebookSignIn');
+  const textStyle: TextStyle = { color: theme.textPrimary };
+  const label = t('auth.googleSignIn');
 
   return (
     <TouchableOpacity
@@ -92,14 +71,11 @@ export const SocialAuthButton: React.FC<SocialAuthButtonProps> = ({
       accessibilityLabel={label}
     >
       {loading ? (
-        <ActivityIndicator
-          size="small"
-          color={isGoogle ? theme.textPrimary : '#FFFFFF'}
-        />
+        <ActivityIndicator size="small" color={theme.textPrimary} />
       ) : (
         <View style={styles.contentContainer}>
           <View style={styles.iconWrapper}>
-            {isGoogle ? <GoogleSvgIcon /> : <FacebookSvgIcon />}
+            <GoogleSvgIcon />
           </View>
           <Typography variant="bodyLarge" style={[textStyle, { fontWeight: '600' }]}>
             {label}
@@ -139,3 +115,4 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
 });
+

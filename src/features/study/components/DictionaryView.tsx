@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -76,7 +76,7 @@ export const DictionaryView: React.FC = React.memo(() => {
     loadDictionaryData();
   }, [user?.id, user?.nativeLang, user?.targetLang, setFavoritesMap]);
 
-  const toggleFavorite = async (wordId: string) => {
+  const toggleFavorite = useCallback(async (wordId: string) => {
     const isFav = !!favoritesMap[wordId];
     setFavoriteStatus(wordId, !isFav);
 
@@ -87,9 +87,9 @@ export const DictionaryView: React.FC = React.memo(() => {
         setFavoriteStatus(wordId, isFav);
       }
     }
-  };
+  }, [favoritesMap, user?.id, setFavoriteStatus]);
 
-  const handleAudioPlay = (word: WordEntity) => {
+  const handleAudioPlay = useCallback((word: WordEntity) => {
     setPlayingId(word.id);
     const targetLanguage = user?.targetLang || word.targetLang || 'en';
     const audioUrl = parseTtsAudioUrl(
@@ -107,25 +107,59 @@ export const DictionaryView: React.FC = React.memo(() => {
       onEnd: () => setPlayingId(null),
       onError: () => setPlayingId(null),
     });
-  };
+  }, [user?.targetLang]);
 
   const allWords = studiedWords;
-  const filteredWords = (activeFilter === 'recent' ? recentWords : allWords).filter((item) => {
+  const filteredWords = React.useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
-    const matchesSearch =
-      !q ||
-      item.wordNative.toLowerCase().includes(q) ||
-      item.wordTarget.toLowerCase().includes(q) ||
-      (item.phonetic && item.phonetic.toLowerCase().includes(q));
+    const sourceList = activeFilter === 'recent' ? recentWords : allWords;
+    return sourceList.filter((item) => {
+      const matchesSearch =
+        !q ||
+        item.wordNative.toLowerCase().includes(q) ||
+        item.wordTarget.toLowerCase().includes(q) ||
+        (item.phonetic && item.phonetic.toLowerCase().includes(q));
 
-    if (!matchesSearch) return false;
+      if (!matchesSearch) return false;
 
-    if (activeFilter === 'favorites') return !!favoritesMap[item.id];
-    return true;
-  });
+      if (activeFilter === 'favorites') return !!favoritesMap[item.id];
+      return true;
+    });
+  }, [activeFilter, recentWords, allWords, searchQuery, favoritesMap]);
 
-  const favoritesCount = allWords.filter((i) => !!favoritesMap[i.id]).length;
+  const favoritesCount = React.useMemo(
+    () => allWords.filter((i) => !!favoritesMap[i.id]).length,
+    [allWords, favoritesMap]
+  );
   const recentCount = recentWords.length;
+
+  const keyExtractor = useCallback((item: WordEntity) => item.id, []);
+
+  const renderItem = useCallback(({ item }: { item: WordEntity }) => {
+    const isFav = !!favoritesMap[item.id];
+    const catBadge = (cat?: string) => {
+      switch (cat?.toLowerCase()) {
+        case 'food': case 'restaurant': case 'shopping': return t('study.categoryFood');
+        case 'emotions': return t('study.categoryEmotions');
+        case 'travel': case 'hospital': case 'health': return t('study.categoryTravel');
+        case 'social': return t('study.categorySocial');
+        default: return null;
+      }
+    };
+    const badgeLabel = catBadge(item.category);
+
+    return (
+      <StudyWordCardRow
+        item={item}
+        isFavorite={isFav}
+        isPlaying={playingId === item.id}
+        onAudioPlay={handleAudioPlay}
+        onToggleFavorite={toggleFavorite}
+        badgeLabel={badgeLabel}
+        t={t}
+      />
+    );
+  }, [favoritesMap, playingId, handleAudioPlay, toggleFavorite, t]);
 
   return (
     <View style={styles.container}>
@@ -149,7 +183,12 @@ export const DictionaryView: React.FC = React.memo(() => {
       ) : (
         <FlatList
           data={filteredWords}
-          keyExtractor={(item) => item.id}
+          keyExtractor={keyExtractor}
+          renderItem={renderItem}
+          initialNumToRender={8}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+          removeClippedSubviews={Platform.OS === 'android'}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={[
             styles.listContent,
@@ -166,31 +205,6 @@ export const DictionaryView: React.FC = React.memo(() => {
               </Text>
             </View>
           }
-          renderItem={({ item }) => {
-            const isFav = !!favoritesMap[item.id];
-            const catBadge = (cat?: string) => {
-              switch (cat?.toLowerCase()) {
-                case 'food': case 'restaurant': case 'shopping': return t('study.categoryFood');
-                case 'emotions': return t('study.categoryEmotions');
-                case 'travel': case 'hospital': case 'health': return t('study.categoryTravel');
-                case 'social': return t('study.categorySocial');
-                default: return null;
-              }
-            };
-            const badgeLabel = catBadge(item.category);
-
-            return (
-              <StudyWordCardRow
-                item={item}
-                isFavorite={isFav}
-                isPlaying={playingId === item.id}
-                onAudioPlay={handleAudioPlay}
-                onToggleFavorite={toggleFavorite}
-                badgeLabel={badgeLabel}
-                t={t}
-              />
-            );
-          }}
         />
       )}
     </View>

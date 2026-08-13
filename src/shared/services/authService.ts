@@ -11,10 +11,6 @@ export class AuthService {
     return authRepository.signInWithGoogle();
   }
 
-  async signInWithFacebook() {
-    return authRepository.signInWithFacebook();
-  }
-
   async signInAsGuest(nativeLang?: string, targetLang?: string) {
     useAuthStore.getState().setGuestUser(nativeLang as SupportedLanguage, targetLang as SupportedLanguage);
   }
@@ -94,14 +90,6 @@ export class AuthService {
 
   async updateDisplayName(userId: string, displayName: string) {
     return this.updateProfile(userId, { displayName });
-  }
-
-  async updateLanguagePreferences(userId: string, nativeLang: string, targetLang: string) {
-    return this.updateProfile(userId, { nativeLang: nativeLang as any, targetLang: targetLang as any });
-  }
-
-  async checkCurrentSession() {
-    return this.restoreSession();
   }
 }
 

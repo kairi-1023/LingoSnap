@@ -28,48 +28,21 @@ export const GuestAuthModal: React.FC<GuestAuthModalProps> = ({
   subtitle,
 }) => {
   const { t } = useTranslation();
-  const { signInWithGoogle, signInWithFacebook } = useAuth();
+  const { handleGoogleSignInWithLoading } = useAuth();
   const { theme } = useThemeStore();
   const [loadingGoogle, setLoadingGoogle] = useState(false);
-  const [loadingFacebook, setLoadingFacebook] = useState(false);
 
-  const handleGoogleSignIn = async () => {
-    setLoadingGoogle(true);
-    try {
-      await signInWithGoogle();
-      onClose();
-    } catch (error: unknown) {
-      if (error instanceof Error && error.name === 'OAuthCancelledError') {
-        return;
+  const handleGoogleSignIn = () => {
+    handleGoogleSignInWithLoading(
+      setLoadingGoogle,
+      onClose,
+      (error) => {
+        const message = error instanceof Error ? error.message : t('auth.googleSignInError');
+        Alert.alert(t('auth.googleSignInTitle'), message);
       }
-      const message = error instanceof Error ? error.message : t('auth.googleSignInError');
-      Alert.alert(
-        t('auth.googleSignInTitle'),
-        message
-      );
-    } finally {
-      setLoadingGoogle(false);
-    }
+    );
   };
 
-  const handleFacebookSignIn = async () => {
-    setLoadingFacebook(true);
-    try {
-      await signInWithFacebook();
-      onClose();
-    } catch (error: unknown) {
-      if (error instanceof Error && error.name === 'OAuthCancelledError') {
-        return;
-      }
-      const message = error instanceof Error ? error.message : t('auth.facebookSignInError');
-      Alert.alert(
-        t('auth.facebookSignInTitle'),
-        message
-      );
-    } finally {
-      setLoadingFacebook(false);
-    }
-  };
 
   return (
     <AppSheet
@@ -113,14 +86,6 @@ export const GuestAuthModal: React.FC<GuestAuthModalProps> = ({
               provider="google"
               onPress={handleGoogleSignIn}
               loading={loadingGoogle}
-              disabled={loadingFacebook}
-              style={{ marginBottom: 10 }}
-            />
-            <SocialAuthButton
-              provider="facebook"
-              onPress={handleFacebookSignIn}
-              loading={loadingFacebook}
-              disabled={loadingGoogle}
             />
           </View>
 

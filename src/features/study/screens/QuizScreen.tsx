@@ -27,8 +27,6 @@ import { BottomTabBar, TabType } from '../../../shared/components/BottomTabBar';
 
 import { useAuthStore } from '../../../shared/stores/useAuthStore';
 import { useThemeStore } from '../../../shared/stores/useThemeStore';
-import { quizService } from '../../../application/services/quizService';
-import { progressService } from '../../../application/services/progressService';
 import { soundService } from '../../../shared/services/soundService';
 import { ttsService } from '../../../shared/services/ttsService';
 import { studyService } from '../../../shared/services/studyService';
@@ -39,23 +37,7 @@ import { aiLessonRepository } from '../../../infrastructure/supabase/aiLessonRep
 import { shuffle } from '../../../shared/utils/arrayUtils';
 import { getVocabularyImageUrl } from '../../../shared/utils/vocabularyImageMap';
 import { parseTtsAudioUrl } from '../../../shared/utils/ttsStorage';
-
-function getLangField<T extends Record<string, any>>(obj: T, prefix: string, langCode: string): string {
-  if (!obj) return '';
-  const cap = langCode.charAt(0).toUpperCase() + langCode.slice(1).toLowerCase();
-  const camelKey = `${prefix}${cap}`;
-  const snakeKey = `${prefix}_${langCode.toLowerCase()}`;
-
-  if (camelKey in obj && obj[camelKey]) return String(obj[camelKey]);
-  if (snakeKey in obj && obj[snakeKey]) return String(obj[snakeKey]);
-
-  const fallbackCamel = `${prefix}En`;
-  const fallbackSnake = `${prefix}_en`;
-  if (fallbackCamel in obj && obj[fallbackCamel]) return String(obj[fallbackCamel]);
-  if (fallbackSnake in obj && obj[fallbackSnake]) return String(obj[fallbackSnake]);
-
-  return '';
-}
+import { getLangField } from '../../../shared/utils/languageUtils';
 
 function getQuizAnswerAudioUrl(question: AIQuizQuestionEntity | undefined, language: string): string | null {
   const data = question?.questionData;
@@ -228,21 +210,7 @@ export const QuizScreen: React.FC<QuizScreenProps> = React.memo(({
       completionSubmittedRef.current = true;
       const finalScorePct = Math.round((correctAnswersRef.current / (totalQuestions || 1)) * 100);
 
-      try {
-        if (user?.id && lessonId) {
-          await quizService.createQuiz({
-            lessonId,
-            userId: user.id,
-            score: finalScorePct,
-            completed: true,
-          });
-          await progressService.updateLessonProgress(user.id, lessonId, finalScorePct);
-        }
-      } catch (err) {
-        console.warn('[QuizScreen] Final quiz submission warning:', err);
-      } finally {
-        setScreenState('completed');
-      }
+      setScreenState('completed');
     }
   }, [currentIndex, totalQuestions, user?.id, lessonId]);
 

@@ -103,8 +103,8 @@ export function useProfileScreen() {
     if (user?.displayName) setInputDisplayName(user.displayName);
   }, [user?.displayName]);
 
-  const userName = useMemo(() => user?.displayName || user?.email?.split('@')[0] || 'User', [user?.displayName, user?.email]);
-  const userInitials = useMemo(() => userName.charAt(0).toUpperCase(), [userName]);
+  const userName = user?.displayName || user?.email?.split('@')[0] || 'User';
+  const userInitials = userName.charAt(0).toUpperCase();
 
   const handleOpenAvatarModal = useCallback(() => {
     setSelectedAvatarUrl(user?.avatarUrl || '');

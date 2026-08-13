@@ -9,9 +9,9 @@ export default function TabsLayout() {
         tabBarStyle: { display: 'none' },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: 'Home' }} />
-      <Tabs.Screen name="study" options={{ title: 'Study' }} />
-      <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
+      <Tabs.Screen name="index" />
+      <Tabs.Screen name="study" />
+      <Tabs.Screen name="profile" />
     </Tabs>
   );
 }

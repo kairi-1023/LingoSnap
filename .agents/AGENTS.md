@@ -30,7 +30,7 @@ Optimize for:
 ---
 
 # Tech & Feature Specs
-- **Auth**: Google Auth, Facebook Auth
+- **Auth**: Google Auth
 - **Push Notification**: Expo Notifications (MVP 포함, 1일 최대 2회 제한)
 - **Dictionary**: Recent Words & Favorite Words
 

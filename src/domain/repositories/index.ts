@@ -3,5 +3,3 @@ export * from './IStudyRepository';
 export * from './IVocabularyRepository';
 export * from './IAILessonRepository';
 export * from './IAIQuizRepository';
-export * from './IAIProgressRepository';
-export * from './IAIReviewRepository';

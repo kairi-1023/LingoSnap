@@ -100,12 +100,8 @@ export function useHomeScreen() {
 
 
 
-  const userFirstName = useMemo(
-    () => (user?.displayName ? user.displayName.split(' ')[0] : user?.email?.split('@')[0] || 'User'),
-    [user?.displayName, user?.email]
-  );
-
-  const userInitials = useMemo(() => userFirstName.charAt(0).toUpperCase(), [userFirstName]);
+  const userFirstName = user?.displayName ? user.displayName.split(' ')[0] : user?.email?.split('@')[0] || 'User';
+  const userInitials = userFirstName.charAt(0).toUpperCase();
 
   // Navigate to ImageLessonScreen (passing lessonId parameter)
   const handleSelectLesson = useCallback(

@@ -122,10 +122,6 @@ export class StudyService {
     }
   }
 
-  async fetchStreak() {
-    return { currentStreak: 0, lastStudyDate: null, studiedToday: false, studiedYesterday: false };
-  }
-
   async checkTodayStudyStatus(userId: string) {
     const sessionId = useAuthStore.getState().sessionId;
     const status = await studyRepository.checkTodayStudyLog(userId);

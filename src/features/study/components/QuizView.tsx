@@ -33,7 +33,6 @@ export const QuizView: React.FC<QuizViewProps> = React.memo(({ onCompleteQuizSte
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const user = useAuthStore((state) => state.user);
-  const quizzes = useStudyStore((state) => state.quizzes);
   const todayWords = useStudyStore((state) => state.todayWords);
   const theme = useThemeStore((state) => state.theme);
 
@@ -83,9 +82,8 @@ export const QuizView: React.FC<QuizViewProps> = React.memo(({ onCompleteQuizSte
   const userFirstName = user?.displayName || 'You';
 
   const activeQuizzes = useMemo(() => {
-    if (quizzes.length > 0) return quizzes;
     return studyService.generateQuizzes(todayWords, userFirstName);
-  }, [quizzes, todayWords, userFirstName]);
+  }, [todayWords, userFirstName]);
 
   const currentQuiz = activeQuizzes[questionIndex];
   const totalQuestions = activeQuizzes.length || 1;

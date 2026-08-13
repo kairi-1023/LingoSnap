@@ -151,63 +151,6 @@ export class AILessonRepository implements IAILessonRepository {
       return [];
     }
   }
-
-  async createLesson(lesson: Omit<AILessonEntity, 'id' | 'createdAt'>): Promise<AILessonEntity> {
-    const { data, error } = await supabase
-      .from('ai_lessons')
-      .insert({
-        user_id: lesson.userId,
-        title: lesson.title,
-        description: lesson.description,
-        image_url: lesson.imageUrl || '',
-        ai_caption: lesson.aiCaption,
-        completed_at: lesson.completedAt,
-      })
-      .select()
-      .single();
-
-    if (error || !data) throw new Error(`Failed to create lesson: ${error?.message}`);
-    return mapRowToLessonEntity(data);
-  }
-
-  async addVocabularyToLesson(
-    lessonId: string,
-    vocabularyId: string,
-    displayOrder = 0,
-    boundingBox?: Record<string, any>
-  ): Promise<AILessonVocabularyEntity> {
-    // 1:N Direct linkage: update study_vocabularies.lesson_id
-    const { data, error } = await supabase
-      .from('study_vocabularies')
-        .update({
-          lesson_id: lessonId,
-        })
-      .eq('id', vocabularyId)
-      .select()
-      .single();
-
-    if (error || !data) throw new Error(`Failed to add vocabulary to lesson: ${error?.message}`);
-
-    const vocabEntity = mapRowToVocabularyEntity(data);
-    return {
-      id: `${lessonId}_${data.id}`,
-      lessonId,
-      vocabularyId: data.id,
-       displayOrder,
-      boundingBox: boundingBox || null,
-      createdAt: data.created_at || new Date().toISOString(),
-      vocabulary: vocabEntity,
-    };
-  }
-
-  async markLessonComplete(lessonId: string): Promise<void> {
-    const { error } = await supabase
-      .from('ai_lessons')
-      .update({ completed_at: new Date().toISOString() })
-      .eq('id', lessonId);
-
-    if (error) throw new Error(`Failed to mark lesson complete: ${error.message}`);
-  }
 }
 
 export const aiLessonRepository = new AILessonRepository();

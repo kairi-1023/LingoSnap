@@ -41,7 +41,7 @@ function RouteGuard() {
 
     if (isAuthenticated) {
       const isAtTabsScreen = segs[0] === '(tabs)';
-      const isAllowedOutsideTab = segs[0] === 'quiz' || segs[0] === 'completion';
+      const isAllowedOutsideTab = segs[0] === 'quiz';
 
       if (!isAtTabsScreen && !isAllowedOutsideTab) {
         router.replace('/(tabs)');
@@ -56,12 +56,11 @@ function RouteGuard() {
   if (isLoading) return <AppSplashScreen />;
 
   return (
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#FFFDF7' } }}>
+    <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="auth/callback" options={{ animation: 'fade' }} />
       <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />
       <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
       <Stack.Screen name="quiz" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
-      <Stack.Screen name="completion" options={{ presentation: 'modal', animation: 'fade' }} />
     </Stack>
   );
 }

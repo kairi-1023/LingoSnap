@@ -79,10 +79,9 @@ export const ProfileScreen: React.FC = React.memo(() => {
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   const displayLanguage = useSettingsStore((state) => state.displayLanguage);
-  const displayLangInfo = useMemo(() => getLanguageDisplay(displayLanguage), [displayLanguage]);
-
-  const nativeLang = useMemo(() => getLangDisplay(user?.nativeLang || 'ko'), [user?.nativeLang]);
-  const targetLang = useMemo(() => getLangDisplay(user?.targetLang || 'en'), [user?.targetLang]);
+  const displayLangInfo = getLanguageDisplay(displayLanguage);
+  const nativeLang = getLangDisplay(user?.nativeLang || 'ko');
+  const targetLang = getLangDisplay(user?.targetLang || 'en');
   const previewUri = selectedAvatarUrl;
 
   const handleToggleDarkMode = useCallback((value: boolean) => {

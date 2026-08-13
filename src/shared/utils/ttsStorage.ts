@@ -1,55 +1,5 @@
-const LANG_TO_FOLDER: Record<string, string> = {
-  ko: 'ko-KR',
-  en: 'en-US',
-  fil: 'fil-PH',
-  tl: 'fil-PH',
-  vi: 'vi-VN',
-  th: 'th-TH',
-  ja: 'ja-JP',
-  es: 'es-ES',
-  zh: 'cmn-CN',
-  fr: 'fr-FR',
-  de: 'de-DE',
-};
-
-function hashText(text: string): string {
-  let hash = 5381;
-  for (let i = 0; i < text.length; i++) {
-    hash = ((hash << 5) + hash) + text.charCodeAt(i);
-    hash = hash & hash;
-  }
-  return Math.abs(hash).toString(36);
-}
-
-export function getTtsStoragePath(text: string, language: string, voice?: string): string {
-  const langFolder = LANG_TO_FOLDER[language.toLowerCase()] || language;
-  const normalizedText = text.toLowerCase().trim();
-  const hashInput = `${langFolder}:${normalizedText}:${voice || 'default'}`;
-  const hash = hashText(hashInput);
-  return `tts/${langFolder}/${hash}.mp3`;
-}
-
-export function getTtsPublicUrl(storageBaseUrl: string, path: string): string {
-  const base = storageBaseUrl.replace(/\/+$/, '');
-  return `${base}/${path}`;
-}
-
-export interface TtsUrlMap {
-  [lang: string]: {
-    word?: string;
-    example?: string;
-    [key: string]: any;
-  };
-}
-
-export function normalizeLanguageCode(lang?: string | null): string {
-  const norm = (lang || '').toLowerCase().trim();
-  if (!norm) return 'en';
-  if (norm.startsWith('tl') || norm.includes('tagalog') || norm.includes('fil') || norm.includes('ph')) return 'tl';
-  if (norm.startsWith('ko') || norm.includes('korean') || norm.includes('kr')) return 'ko';
-  if (norm.startsWith('en') || norm.includes('english') || norm.includes('us')) return 'en';
-  return norm.split(/[-_]/)[0];
-}
+import { normalizeLanguageCode } from './languageUtils';
+export { normalizeLanguageCode };
 
 const STORAGE_BASE = 'https://ghdoqflateritxmnlnwa.supabase.co/storage/v1/object/public/tts-audio';
 
@@ -73,6 +23,7 @@ export function buildTtsAudioUrlJson(conceptCode?: string | null, category?: str
 
   return JSON.stringify(map);
 }
+
 
 export function parseTtsAudioUrl(
   ttsAudioUrl: string | null | undefined,

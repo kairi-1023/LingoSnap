@@ -27,29 +27,7 @@ export const spacingTokens = {
   '3xl': scaleSpacing(64),
 } as const;
 
-// 2. Padding Tokens
-export const paddingTokens = {
-  screenHorizontal: scaleSpacing(24),
-  screenTop: scaleSpacing(16),
-  screenBottom: scaleSpacing(32),
-  
-  cardPaddingSm: scaleSpacing(16),
-  cardPaddingMd: scaleSpacing(16),
-  cardPaddingLg: scaleSpacing(24),
-  
-  buttonPaddingHorizontal: scaleSpacing(24),
-  buttonPaddingVertical: scaleSpacing(16),
-} as const;
-
-// 3. Margin & Gap Tokens
-export const marginTokens = {
-  sectionGap: scaleSpacing(32),
-  elementGap: scaleSpacing(16),
-  tightGap: scaleSpacing(8),
-  inlineGap: scaleSpacing(8),
-} as const;
-
-// 4. Safe Area & Device Dimensions (with getters for dynamic screen updates)
+// 2. Safe Area & Device Dimensions (with getters for dynamic screen updates)
 const initialDim = getWindowDimensions();
 export const layoutTokens = {
   get windowWidth() { return Dimensions.get('window').width; },
@@ -60,7 +38,7 @@ export const layoutTokens = {
   minTouchTarget: 44, // Minimum 44x44px touch target for accessibility
 } as const;
 
-// 5. Border Radius Tokens
+
 export const radiusTokens = {
   none: 0,
   sm: scaleSpacing(8),
@@ -73,7 +51,6 @@ export const radiusTokens = {
 } as const;
 
 export const spacing = spacingTokens;
-export const padding = paddingTokens;
-export const margin = marginTokens;
 export const layout = layoutTokens;
 export const radius = radiusTokens;
+

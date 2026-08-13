@@ -10,6 +10,8 @@ import { WordEntity } from '../../../domain/entities/Word';
 import { getVocabularyImageUrl } from '../../../shared/utils/vocabularyImageMap';
 
 
+import { Card } from '../../../shared/components/Card';
+
 interface ReviewWordsCardProps {
   theme: ThemeColors;
   words: WordEntity[];
@@ -22,7 +24,14 @@ export const ReviewWordsCard: React.FC<ReviewWordsCardProps> = ({ theme, words, 
   const visibleWords = words.slice(0, 6);
 
   return (
-    <View style={[styles.section, { backgroundColor: theme.cardBackground, borderColor: theme.border }]}>
+    <Card
+      radius="large"
+      padding={0}
+      bg={theme.cardBackground}
+      borderColor={theme.border}
+      elevation="soft"
+      style={styles.section}
+    >
       <View style={styles.header}>
         <View style={styles.titleRow}>
           <View style={[styles.headerIcon, { backgroundColor: theme.fillSubtle }]}>
@@ -105,7 +114,7 @@ export const ReviewWordsCard: React.FC<ReviewWordsCardProps> = ({ theme, words, 
           })}
         </ScrollView>
       )}
-    </View>
+    </Card>
   );
 };
 
@@ -113,13 +122,6 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 12,
     padding: spacing.md,
-    borderRadius: 18,
-    borderWidth: 1,
-    elevation: 1,
-    shadowColor: '#2F3437',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
   },
 
 

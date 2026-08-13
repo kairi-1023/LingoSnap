@@ -19,42 +19,19 @@ import { useTranslation } from 'react-i18next';
 
 export const WelcomeScreen: React.FC = () => {
   const { t } = useTranslation();
-  const { signInWithGoogle, signInWithFacebook, signInAsGuest } = useAuth();
+  const { handleGoogleSignInWithLoading, signInAsGuest } = useAuth();
   const { theme } = useThemeStore();
   const [loadingGoogle, setLoadingGoogle] = useState(false);
-  const [loadingFacebook, setLoadingFacebook] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
-  const handleGoogleSignIn = useCallback(async () => {
-    setLoadingGoogle(true);
-    try {
-      await signInWithGoogle();
-    } catch (error: unknown) {
-      if (error instanceof Error && error.name === 'OAuthCancelledError') {
-        return;
-      }
+  const handleGoogleSignIn = useCallback(() => {
+    handleGoogleSignInWithLoading(setLoadingGoogle, undefined, () => {
       setToastMessage(t('auth.googleSignInError'));
       setToastVisible(true);
-    } finally {
-      setLoadingGoogle(false);
-    }
-  }, [signInWithGoogle, t]);
+    });
+  }, [handleGoogleSignInWithLoading, t]);
 
-  const handleFacebookSignIn = useCallback(async () => {
-    setLoadingFacebook(true);
-    try {
-      await signInWithFacebook();
-    } catch (error: unknown) {
-      if (error instanceof Error && error.name === 'OAuthCancelledError') {
-        return;
-      }
-      setToastMessage(t('auth.facebookSignInError'));
-      setToastVisible(true);
-    } finally {
-      setLoadingFacebook(false);
-    }
-  }, [signInWithFacebook, t]);
 
   const router = useRouter();
 
@@ -111,15 +88,6 @@ export const WelcomeScreen: React.FC = () => {
               provider="google"
               onPress={handleGoogleSignIn}
               loading={loadingGoogle}
-              disabled={loadingFacebook}
-              style={styles.buttonSpacing}
-            />
-
-            <SocialAuthButton
-              provider="facebook"
-              onPress={handleFacebookSignIn}
-              loading={loadingFacebook}
-              disabled={loadingGoogle}
             />
 
             {/* Guest Mode Link */}

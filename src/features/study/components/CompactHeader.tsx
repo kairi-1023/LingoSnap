@@ -25,11 +25,8 @@ export const CompactHeader: React.FC<CompactHeaderProps> = React.memo(({
   totalCount: customTotal,
 }) => {
   const { theme } = useThemeStore();
-  const todayWords = useStudyStore((state) => state.todayWords);
-  const storeCurrentIndex = useStudyStore((state) => state.currentIndex);
-
-  const totalCount = typeof customTotal === 'number' && customTotal > 0 ? customTotal : (todayWords.length || 10);
-  const currentStep = typeof customStep === 'number' ? customStep : (storeCurrentIndex + 1);
+  const totalCount = typeof customTotal === 'number' && customTotal > 0 ? customTotal : 10;
+  const currentStep = typeof customStep === 'number' ? customStep : 1;
   const progressRatio = totalCount > 0 ? Math.min(1, Math.max(0, currentStep / totalCount)) : 0;
 
   return (

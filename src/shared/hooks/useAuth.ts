@@ -6,12 +6,31 @@ export const useAuth = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isLoading = useAuthStore((state) => state.isLoading);
 
+  const handleGoogleSignInWithLoading = async (
+    setLoading: (loading: boolean) => void,
+    onSuccess?: () => void,
+    onError?: (error: unknown) => void
+  ) => {
+    setLoading(true);
+    try {
+      await authService.signInWithGoogle();
+      if (onSuccess) onSuccess();
+    } catch (error: unknown) {
+      if (error instanceof Error && error.name === 'OAuthCancelledError') {
+        return;
+      }
+      if (onError) onError(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     user,
     isAuthenticated,
     isLoading,
     signInWithGoogle: authService.signInWithGoogle,
-    signInWithFacebook: authService.signInWithFacebook,
+    handleGoogleSignInWithLoading,
     signInAsGuest: authService.signInAsGuest.bind(authService),
     restoreSession: authService.restoreSession,
     refreshToken: authService.refreshToken,

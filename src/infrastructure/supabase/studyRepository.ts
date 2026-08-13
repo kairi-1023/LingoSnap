@@ -288,10 +288,6 @@ function buildFallbackWord(shortId: string, targetLang: string, nativeLang: stri
   }
 }
 
-function getAllFallbackWord(shortId: string, nativeLang: string, targetLang: string, now: string): WordEntity | null {
-  return buildFallbackWord(shortId, targetLang, nativeLang, now);
-}
-
 export class SupabaseStudyRepository implements IStudyRepository {
   async getTodayWords(
     nativeLang: string = 'en',
@@ -1021,7 +1017,7 @@ export class SupabaseStudyRepository implements IStudyRepository {
         if (matchedIds.has(wid)) continue;
         const shortId = FALLBACK_UUID_TO_SHORT_ID[wid];
         if (!shortId) continue;
-        const fallbackWord = getAllFallbackWord(shortId, nativeLang, targetLang, now);
+        const fallbackWord = buildFallbackWord(shortId, targetLang, nativeLang, now);
         if (fallbackWord) {
           results.push(fallbackWord);
         }

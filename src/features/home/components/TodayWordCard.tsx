@@ -7,8 +7,9 @@ import { spacing } from '../../../shared/theme/spacing';
 import { ThemeColors } from '../../../shared/stores/useThemeStore';
 import { WordEntity } from '../../../domain/entities/Word';
 import { getVocabularyImageUrl } from '../../../shared/utils/vocabularyImageMap';
-import { parseTtsAudioUrl } from '../../../shared/utils/ttsStorage';
-import { ttsService } from '../../../shared/services/ttsService';
+import { useTtsAudio } from '../../../shared/hooks/useTtsAudio';
+
+import { Card } from '../../../shared/components/Card';
 
 interface TodayWordCardProps {
   theme: ThemeColors;
@@ -22,37 +23,24 @@ export const TodayWordCard: React.FC<TodayWordCardProps> = ({
   onPress,
 }) => {
   const { t } = useTranslation();
-  const [isPlaying, setIsPlaying] = React.useState(false);
+  const { isPlaying, play: handlePlayWord } = useTtsAudio({
+    text: word.wordTarget,
+    language: word.targetLang || 'en',
+    ttsAudioUrl: word.ttsAudioUrl,
+    conceptId: word.conceptId || word.id,
+    category: word.category,
+    difficultyLevel: word.difficultyLevel,
+  });
   const imageUrl = getVocabularyImageUrl(word.imageWord || word.wordTarget || word.conceptId || word.id);
 
-  const handlePlayWord = () => {
-    const language = word.targetLang || 'en';
-    const audioUrl = parseTtsAudioUrl(
-      word.ttsAudioUrl,
-      language,
-      'word',
-      word.conceptId || word.id,
-      word.category,
-      word.difficultyLevel,
-    );
-
-    setIsPlaying(true);
-    ttsService.speak({
-      text: word.wordTarget,
-      language,
-      audioUrl,
-      rate: 1.0,
-      onEnd: () => setIsPlaying(false),
-      onError: () => setIsPlaying(false),
-    });
-  };
-
   return (
-    <View
-      style={[
-        styles.card,
-        { backgroundColor: theme.cardBackground, borderColor: theme.border },
-      ]}
+    <Card
+      radius="large"
+      padding={0}
+      bg={theme.cardBackground}
+      borderColor={theme.border}
+      elevation="soft"
+      style={styles.card}
     >
       <Pressable
         style={({ pressed }) => [
@@ -118,7 +106,7 @@ export const TodayWordCard: React.FC<TodayWordCardProps> = ({
             borderless: true,
             radius: 22,
           }}
-          onPress={handlePlayWord}
+          onPress={() => handlePlayWord()}
           accessibilityRole="button"
           accessibilityLabel={t('study.playPronunciation')}
         >
@@ -137,7 +125,7 @@ export const TodayWordCard: React.FC<TodayWordCardProps> = ({
           <ArrowRight size={20} color={theme.textSecondary} />
         </Pressable>
       </View>
-    </View>
+    </Card>
   );
 };
 
@@ -148,14 +136,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     minHeight: 124,
     marginBottom: 12,
-    borderRadius: 18,
-    borderWidth: 1,
-    overflow: 'hidden',
-    elevation: 1,
-    shadowColor: '#2F3437',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
   },
 
   mainContent: {

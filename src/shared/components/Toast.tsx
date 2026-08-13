@@ -55,7 +55,7 @@ export const Toast: React.FC<ToastProps> = ({
     }
   }, [visible]);
 
-  const tokens = useMemo(() => TOAST_TYPE_MAP[type] || TOAST_TYPE_MAP.info, [type]);
+  const tokens = TOAST_TYPE_MAP[type] || TOAST_TYPE_MAP.info;
 
   if (!visible) return null;
 

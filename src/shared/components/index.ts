@@ -4,13 +4,11 @@ export * from './AppSheet';
 export * from './Avatar';
 export * from './ProgressBar';
 export * from './Skeleton';
-export * from './Pill';
 export * from './Toast';
 export * from './Logo';
 export * from './SocialAuthButton';
 export * from './HomeHeader';
 export * from './Header';
 export * from './BottomTabBar';
-export * from './SegmentedControl';
 export * from './Typography';
 

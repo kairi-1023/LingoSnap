@@ -16,23 +16,6 @@ export class LessonService {
   async getLessonVocabularies(lessonId: string): Promise<AILessonVocabularyEntity[]> {
     return this.lessonRepo.getLessonVocabularies(lessonId);
   }
-
-  async createLesson(lesson: Omit<AILessonEntity, 'id' | 'createdAt'>): Promise<AILessonEntity> {
-    return this.lessonRepo.createLesson(lesson);
-  }
-
-  async addVocabularyToLesson(
-    lessonId: string,
-    vocabularyId: string,
-    displayOrder?: number,
-    boundingBox?: Record<string, any>
-  ): Promise<AILessonVocabularyEntity> {
-    return this.lessonRepo.addVocabularyToLesson(lessonId, vocabularyId, displayOrder, boundingBox);
-  }
-
-  async markLessonComplete(lessonId: string): Promise<void> {
-    return this.lessonRepo.markLessonComplete(lessonId);
-  }
 }
 
 export const lessonService = new LessonService();

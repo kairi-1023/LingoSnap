@@ -6,7 +6,6 @@ import { changeAppLanguage, SUPPORTED_I18N_LANGUAGES } from '../i18n';
 interface SettingsState {
   displayLanguage: string;
   setDisplayLanguage: (lang: string) => Promise<void>;
-  toggleDisplayLanguage: () => Promise<void>;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -17,12 +16,6 @@ export const useSettingsStore = create<SettingsState>()(
         const code = SUPPORTED_I18N_LANGUAGES.includes(lang) ? lang : 'en';
         await changeAppLanguage(code);
         set({ displayLanguage: code });
-      },
-      toggleDisplayLanguage: async () => {
-        const current = get().displayLanguage;
-        const next = current === 'ko' ? 'en' : 'ko';
-        await changeAppLanguage(next);
-        set({ displayLanguage: next });
       },
     }),
     {

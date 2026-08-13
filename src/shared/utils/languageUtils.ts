@@ -71,3 +71,36 @@ export const formatLanguagePairWithFlags = (
     formatted: `${native.flag} ${native.name} ➔ ${target.flag} ${target.name}`,
   };
 };
+
+/**
+ * Safely extracts localized string field dynamically by prefix and language code
+ */
+export function getLangField<T extends Record<string, any>>(obj: T, prefix: string, langCode: string): string {
+  if (!obj) return '';
+  const cap = langCode.charAt(0).toUpperCase() + langCode.slice(1).toLowerCase();
+  const camelKey = `${prefix}${cap}`;
+  const snakeKey = `${prefix}_${langCode.toLowerCase()}`;
+
+  if (camelKey in obj && obj[camelKey]) return String(obj[camelKey]);
+  if (snakeKey in obj && obj[snakeKey]) return String(obj[snakeKey]);
+
+  const fallbackCamel = `${prefix}En`;
+  const fallbackSnake = `${prefix}_en`;
+  if (fallbackCamel in obj && obj[fallbackCamel]) return String(obj[fallbackCamel]);
+  if (fallbackSnake in obj && obj[fallbackSnake]) return String(obj[fallbackSnake]);
+
+  return '';
+}
+
+/**
+ * Standardize and normalize language codes (e.g., 'en-US' -> 'en', 'Tagalog' -> 'tl')
+ */
+export function normalizeLanguageCode(lang?: string | null): string {
+  const norm = (lang || '').toLowerCase().trim();
+  if (!norm) return 'en';
+  if (norm.startsWith('tl') || norm.includes('tagalog') || norm.includes('fil') || norm.includes('ph')) return 'tl';
+  if (norm.startsWith('ko') || norm.includes('korean') || norm.includes('kr')) return 'ko';
+  if (norm.startsWith('en') || norm.includes('english') || norm.includes('us')) return 'en';
+  return norm.split(/[-_]/)[0];
+}
+

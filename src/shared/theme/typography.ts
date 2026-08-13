@@ -76,12 +76,6 @@ export const typographyScale = {
   },
 } as const;
 
-// 4. Vocabulary Hierarchy Display Rules Token
-export const vocabHierarchy = {
-  nativeWord: typographyScale.screenTitle, // Largest (28pt / Bold)
-  targetWord: typographyScale.sectionTitle, // Medium (20pt / Bold)
-  pronunciation: typographyScale.caption,   // Small (12pt / Medium)
-} as const;
 
 export const typography = typographyScale;
 export type TypographyVariants = keyof typeof typographyScale;

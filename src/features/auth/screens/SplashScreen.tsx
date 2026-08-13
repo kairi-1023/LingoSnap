@@ -146,20 +146,20 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
       style={[
         styles.safeArea,
         {
-          backgroundColor: theme.isDarkMode ? theme.background : '#FFFDF7',
+          backgroundColor: theme.background,
         },
       ]}
     >
       <StatusBar
-        barStyle={theme.isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={theme.isDarkMode ? theme.background : '#FFFDF7'}
+        barStyle={theme.statusBarStyle}
+        backgroundColor={theme.background}
       />
 
       <View
         style={[
           styles.container,
           {
-            backgroundColor: theme.isDarkMode ? theme.background : '#FFFDF7',
+            backgroundColor: theme.background,
           },
         ]}
       >
@@ -230,7 +230,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
             style={[
               styles.progressTrack,
               {
-                backgroundColor: theme.isDarkMode ? theme.fillSubtle : '#E8F5E9',
+                backgroundColor: theme.fillSubtle,
               },
             ]}
           >

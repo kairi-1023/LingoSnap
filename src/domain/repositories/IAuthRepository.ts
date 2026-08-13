@@ -2,7 +2,6 @@ import { UserEntity } from '../entities/User';
 
 export interface IAuthRepository {
   signInWithGoogle(): Promise<UserEntity | null>;
-  signInWithFacebook(): Promise<UserEntity | null>;
   signOut(): Promise<void>;
   deleteAccount(userId: string): Promise<void>;
   getCurrentUser(): Promise<UserEntity | null>;

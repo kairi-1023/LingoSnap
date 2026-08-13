@@ -26,55 +26,7 @@ function mapRowToQuestionEntity(row: any): AIQuizQuestionEntity {
   };
 }
 
-let isQuizTableAvailable = true;
-
 export class AIQuizRepository implements IAIQuizRepository {
-  async createQuiz(quiz: Omit<AIQuizEntity, 'id' | 'createdAt'>): Promise<AIQuizEntity> {
-    if (!isQuizTableAvailable) {
-      return {
-        id: `quiz_${Date.now()}`,
-        lessonId: quiz.lessonId,
-        userId: quiz.userId,
-        score: quiz.score,
-        completed: quiz.completed,
-        createdAt: new Date().toISOString(),
-      };
-    }
-
-    try {
-      const { data, error } = await supabase
-        .from('ai_quizzes')
-        .insert({
-          lesson_id: quiz.lessonId,
-        })
-        .select()
-        .single();
-
-      if (error || !data) {
-        isQuizTableAvailable = false;
-        return {
-          id: `quiz_${Date.now()}`,
-          lessonId: quiz.lessonId,
-          userId: quiz.userId,
-          score: quiz.score,
-          completed: quiz.completed,
-          createdAt: new Date().toISOString(),
-        };
-      }
-      return mapRowToQuizEntity(data);
-    } catch (err) {
-      isQuizTableAvailable = false;
-      return {
-        id: `quiz_${Date.now()}`,
-        lessonId: quiz.lessonId,
-        userId: quiz.userId,
-        score: quiz.score,
-        completed: quiz.completed,
-        createdAt: new Date().toISOString(),
-      };
-    }
-  }
-
   async getQuizById(quizId: string): Promise<AIQuizEntity | null> {
     const { data, error } = await supabase
       .from('ai_quizzes')
@@ -95,30 +47,6 @@ export class AIQuizRepository implements IAIQuizRepository {
 
     if (error || !data) return [];
     return data.map(mapRowToQuestionEntity);
-  }
-
-  async addQuizQuestion(question: Omit<AIQuizQuestionEntity, 'id' | 'createdAt'>): Promise<AIQuizQuestionEntity> {
-    const { data, error } = await supabase
-      .from('ai_quiz_questions')
-      .insert({
-        quiz_id: question.quizId,
-        type: question.questionType,
-        question_text: question.questionText || '',
-        options: question.options || [],
-        correct_answer: question.correctAnswer,
-      })
-      .select()
-      .single();
-
-    if (error || !data) throw new Error(`Failed to add quiz question: ${error?.message}`);
-    return mapRowToQuestionEntity(data);
-  }
-
-  async submitQuizScore(quizId: string, score: number): Promise<void> {
-    // Scores are persisted in ai_user_progress because ai_quizzes only stores
-    // the lesson/session relation in the current database schema.
-    void quizId;
-    void score;
   }
 }
 
