@@ -32,3 +32,5 @@ tmp/
 .env.production
 .env.staging
 .env
+
+images_webp/
