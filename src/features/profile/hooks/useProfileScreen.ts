@@ -192,7 +192,9 @@ export function useProfileScreen() {
     (tab: TabType) => {
       if (tab === 'profile') return;
       if (tab === 'home') router.push('/(tabs)');
-      else if (tab === 'study') router.push('/(tabs)/study');
+      else if (tab === 'study') router.push({ pathname: '/(tabs)/study', params: { tab: 'todays_study' } });
+      else if (tab === 'review') router.push({ pathname: '/(tabs)/study', params: { tab: 'review' } });
+      else if (tab === 'dictionary') router.push({ pathname: '/(tabs)/study', params: { tab: 'dictionary' } });
     },
     [router]
   );

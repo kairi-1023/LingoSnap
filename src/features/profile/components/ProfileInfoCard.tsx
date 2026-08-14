@@ -92,10 +92,10 @@ export const ProfileInfoCard: React.FC<ProfileInfoCardProps> = ({
             <Sparkles size={18} color="#5CB85C" style={{ marginRight: 8 }} />
             <View style={{ flex: 1 }}>
               <Typography variant="bodyLarge" color="primary">
-                {'Save Streak'}
+                {t('auth.guestProfileCardTitle')}
               </Typography>
               <Typography variant="caption" color="textSecondary">
-                {'Sign in to sync'}
+                {t('auth.guestProfileCardSubtitle')}
               </Typography>
             </View>
           </View>

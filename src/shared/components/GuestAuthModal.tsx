@@ -68,7 +68,7 @@ export const GuestAuthModal: React.FC<GuestAuthModalProps> = ({
           <View style={styles.bodySection}>
             <Logo width={120} height={80} />
             <Typography variant="cardTitle" align="center" style={styles.modalTitle}>
-              {title || t('auth.saveStreak')}
+              {title || t('auth.guestModalTitle')}
             </Typography>
             <Typography
               variant="caption"
@@ -76,7 +76,7 @@ export const GuestAuthModal: React.FC<GuestAuthModalProps> = ({
               align="center"
               style={styles.modalSubtitle}
             >
-              {subtitle || t('auth.signInPrompt')}
+              {subtitle || t('auth.guestModalSubtitle')}
             </Typography>
           </View>
 

@@ -296,7 +296,7 @@ export const QuizScreen: React.FC<QuizScreenProps> = React.memo(({
   const handleBottomTabPress = useCallback(
     (tab: TabType) => {
       if (tab === 'home') router.push('/(tabs)');
-      else if (tab === 'study') router.push('/(tabs)/study');
+      else if (tab === 'study') router.push({ pathname: '/(tabs)/study', params: { tab: 'todays_study' } });
       else if (tab === 'review') router.push({ pathname: '/(tabs)/study', params: { tab: 'review' } });
       else if (tab === 'dictionary') router.push({ pathname: '/(tabs)/study', params: { tab: 'dictionary' } });
       else if (tab === 'profile') router.push('/(tabs)/profile');

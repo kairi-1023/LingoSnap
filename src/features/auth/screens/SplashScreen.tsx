@@ -208,9 +208,9 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
           ]}
         >
           <Image
-            source={require('../../../assets/images/hero_illustration.webp')}
+            source={require('../../../../assets/images/adaptive-icon.png')}
             style={styles.illustration}
-            resizeMode="cover"
+            resizeMode="contain"
           />
         </Animated.View>
 

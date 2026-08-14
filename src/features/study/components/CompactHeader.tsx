@@ -99,6 +99,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
     fontWeight: '700',
     fontSize: 18,
+    textAlign: 'center',
   },
   progressGroup: {
     flexDirection: 'row',

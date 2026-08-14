@@ -128,7 +128,7 @@ export function useHomeScreen() {
   const handleTabPress = useCallback(
     (tab: TabType) => {
       if (tab === 'home') return;
-      if (tab === 'study') router.push('/(tabs)/study');
+      if (tab === 'study') router.push({ pathname: '/(tabs)/study', params: { tab: 'todays_study' } });
       else if (tab === 'review') router.push({ pathname: '/(tabs)/study', params: { tab: 'review' } });
       else if (tab === 'dictionary') router.push({ pathname: '/(tabs)/study', params: { tab: 'dictionary' } });
       else if (tab === 'profile') router.push('/(tabs)/profile');

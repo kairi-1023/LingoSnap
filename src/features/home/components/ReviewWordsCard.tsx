@@ -92,27 +92,29 @@ export const ReviewWordsCard: React.FC<ReviewWordsCardProps> = ({ theme, words, 
                   accessibilityLabel={word.wordTarget}
                   onLayout={(e) => idx === 0 && console.log('[LayoutTrace] first wordCardInner layout:', e.nativeEvent.layout)}
                 >
-                  <View style={[styles.statusDot, { backgroundColor: theme.primary }]} />
-                  <View style={styles.imageFrame} onLayout={(e) => idx === 0 && console.log('[LayoutTrace] first imageFrame layout:', e.nativeEvent.layout)}>
-                    {imageUrl ? (
-                      <Image
-                        source={{ uri: imageUrl }}
-                        style={styles.image}
-                        resizeMode="contain"
-                        onError={(event) => console.warn('[ReviewWordsCard IMAGE FAILED]', {
-                          imageUrl,
-                          error: event.nativeEvent?.error,
-                        })}
-                      />
-                    ) : null}
-                  </View>
-                  <View style={styles.textContent}>
-                    <Typography variant="cardTitle" numberOfLines={1} style={[styles.wordTargetTitle, { color: theme.textPrimary }]}>
-                      {word.wordTarget}
-                    </Typography>
-                    <Typography variant="caption" numberOfLines={1} style={[styles.wordNativeText, { color: theme.textSecondary }]}>
-                      {word.wordNative}
-                    </Typography>
+                  <View style={styles.wordCardContent}>
+                    <View style={[styles.statusDot, { backgroundColor: theme.primary }]} />
+                    <View style={styles.imageFrame} onLayout={(e) => idx === 0 && console.log('[LayoutTrace] first imageFrame layout:', e.nativeEvent.layout)}>
+                      {imageUrl ? (
+                        <Image
+                          source={{ uri: imageUrl }}
+                          style={styles.image}
+                          resizeMode="contain"
+                          onError={(event) => console.warn('[ReviewWordsCard IMAGE FAILED]', {
+                            imageUrl,
+                            error: event.nativeEvent?.error,
+                          })}
+                        />
+                      ) : null}
+                    </View>
+                    <View style={styles.textContent}>
+                      <Typography variant="cardTitle" numberOfLines={1} style={[styles.wordTargetTitle, { color: theme.textPrimary }]}>
+                        {word.wordTarget}
+                      </Typography>
+                      <Typography variant="caption" numberOfLines={1} style={[styles.wordNativeText, { color: theme.textSecondary }]}>
+                        {word.wordNative}
+                      </Typography>
+                    </View>
                   </View>
                 </Pressable>
               </View>
@@ -164,9 +166,11 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   wordCardInner: {
-    padding: 10,
     borderRadius: 16,
     overflow: 'hidden',
+  },
+  wordCardContent: {
+    padding: 10,
   },
   statusDot: {
     position: 'absolute',

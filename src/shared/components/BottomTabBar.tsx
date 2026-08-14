@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import {
   View,
   StyleSheet,
-  TouchableOpacity,
+  Pressable,
+  Platform,
   ViewStyle,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -42,11 +43,17 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = React.memo(({
 }) => {
   const { t } = useTranslation();
   const theme = useThemeStore((state) => state.theme);
+  const isDarkMode = useThemeStore((state) => state.isDarkMode);
   const { isLandscape } = useWindowSizeClass();
 
   return (
-    <SafeAreaView edges={['bottom']} style={[styles.safeArea, { backgroundColor: theme.cardBackground }]}>
+    <SafeAreaView
+      edges={['bottom']}
+      pointerEvents="box-none"
+      style={[styles.safeArea, { backgroundColor: theme.cardBackground }]}
+    >
       <View
+        pointerEvents="box-none"
         style={[
           styles.container,
           isLandscape && styles.containerLandscape,
@@ -63,16 +70,24 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = React.memo(({
           const iconColor = isActive ? theme.primary : theme.textSecondary;
 
           return (
-            <TouchableOpacity
+            <Pressable
               key={item.id}
-              style={styles.tabButton}
-              activeOpacity={0.7}
+              hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+              style={({ pressed }) => [
+                styles.tabButton,
+                pressed && Platform.OS !== 'android' && { opacity: 0.7 },
+              ]}
+              android_ripple={{
+                color: isDarkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
+                borderless: true,
+                radius: 36,
+              }}
               onPress={() => onTabPress(item.id)}
               accessibilityRole="button"
               accessibilityState={{ selected: isActive }}
               accessibilityLabel={t(item.label)}
             >
-              <View style={styles.iconContainer}>
+              <View style={styles.iconContainer} pointerEvents="none">
                 <IconComponent
                   size={23}
                   color={iconColor}
@@ -91,10 +106,11 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = React.memo(({
                     fontWeight: isActive ? '700' : '500',
                   },
                 ]}
+                pointerEvents="none"
               >
                 {t(item.label)}
               </Typography>
-            </TouchableOpacity>
+            </Pressable>
           );
         })}
       </View>
@@ -122,7 +138,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     borderTopWidth: 1,
-    overflow: 'hidden',
+    overflow: Platform.OS === 'android' ? 'visible' : 'hidden',
     shadowColor: '#2F3437',
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.06,

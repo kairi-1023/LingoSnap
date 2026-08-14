@@ -158,7 +158,7 @@ export const HomeScreen: React.FC = React.memo(() => {
             <TodayWordCard
               theme={theme}
               word={todayWord}
-              onPress={() => router.push('/(tabs)/study')}
+              onPress={() => router.push({ pathname: '/(tabs)/study', params: { tab: 'todays_study' } })}
             />
           )}
 

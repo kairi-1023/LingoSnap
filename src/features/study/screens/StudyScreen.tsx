@@ -110,7 +110,13 @@ const StudyHubScreen: React.FC = React.memo(() => {
         <View style={styles.tabletWrapper}>
           {/* Top Compact Header */}
           <CompactHeader
-            title={t('study.studyCenter')}
+            title={
+              activeSubTab === 'review'
+                ? t('bottomTab.review')
+                : activeSubTab === 'dictionary'
+                ? t('bottomTab.dictionary')
+                : t('bottomTab.study')
+            }
             onBackPress={() => router.push('/(tabs)')}
             showProgress={false}
           />

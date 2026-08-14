@@ -24,13 +24,16 @@
     "guestSignIn": "Try as Guest",
     "googleSignInTitle": "Google Sign In",
     "googleSignInError": "Unable to sign in with Google. Please try again.",
-    "saveStreak": "Save your streak & sync couple data",
+    "saveStreak": "Save visual study progress & sync",
+    "guestProfileCardTitle": "Save 5-Min Visual Study Progress",
+    "guestProfileCardSubtitle": "Sign in with Google to back up your short-term memory progress",
+    "guestModalTitle": "5-Min Visual Memory Study Sync",
+    "guestModalSubtitle": "LingoSnap helps you master words quickly with vivid images to boost short-term memory. Sign in now to safely back up your visual vocabulary progress!",
     "signInPrompt": "Sign in with Google in 1 sec",
     "terms": "By signing in, you agree to our Terms of Service & Privacy Policy.",
-    "oneSecSignIn": "1-SEC SIGN IN",
+    "oneSecSignIn": "Quick 1-Sec Sync",
     "closeSignIn": "Close sign in modal",
-    "maybeLater": "Maybe Later",
-    "guestModalSubtitle": "Sign in to back up your daily notes, vocabulary, and connect 1:1 with your partner."
+    "maybeLater": "Maybe Later"
   },
   "settings": {
     "sectionTitle": "PREFERENCES",
