@@ -6,6 +6,7 @@ import { useAuthStore } from '../../shared/stores/useAuthStore';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import { SupportedLanguage } from '../../shared/constants/languages';
 
 // User-facing error types so the UI can differentiate cancellation from failures
@@ -22,6 +23,19 @@ export class OAuthSessionError extends Error {
     this.name = 'OAuthSessionError';
   }
 }
+
+let isGoogleNativeConfigured = false;
+const configureGoogleNative = () => {
+  if (isGoogleNativeConfigured) return;
+  const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+  if (webClientId) {
+    GoogleSignin.configure({
+      webClientId,
+      scopes: ['profile', 'email'],
+    });
+    isGoogleNativeConfigured = true;
+  }
+};
 
 const getRedirectTo = () => {
   if (Platform.OS === 'web' && typeof window !== 'undefined') {
@@ -174,6 +188,38 @@ export class SupabaseAuthRepository implements IAuthRepository {
       return null;
     }
 
+    // 1. Try Native Google Sign-In (Device Account Picker Bottom Sheet)
+    const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+    if (webClientId) {
+      try {
+        configureGoogleNative();
+        await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+        const response = await GoogleSignin.signIn();
+        const idToken = response.data?.idToken || (response as any).idToken;
+
+        if (idToken) {
+          const { data, error } = await supabase.auth.signInWithIdToken({
+            provider: 'google',
+            token: idToken,
+          });
+
+          if (error) {
+            console.warn('[authRepository] signInWithIdToken warning:', error.message);
+          } else if (data?.session?.user) {
+            const dbUser = await this.ensurePublicUser(data.session.user.id, data.session);
+            if (dbUser) return dbUser;
+            return this.buildUserFromSession(data.session);
+          }
+        }
+      } catch (nativeErr: any) {
+        if (nativeErr?.code === statusCodes.SIGN_IN_CANCELLED) {
+          throw new OAuthCancelledError();
+        }
+        console.warn('[authRepository] Native Google Sign-In failed or unconfigured, falling back to WebBrowser OAuth:', nativeErr);
+      }
+    }
+
+    // 2. Fallback: WebBrowser OAuth Flow (Chrome Custom Tab)
     const redirectTo = getRedirectTo();
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
