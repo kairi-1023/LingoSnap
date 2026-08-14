@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../supabase/client';
 
-const OFFLINE_QUEUE_KEY = '@TogetherLingo:offline_study_queue';
+const OFFLINE_QUEUE_KEY = '@LingoSnap:offline_study_queue';
 const MAX_RETRIES = 20;
 const MIN_RETRY_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes between retry attempts
 
@@ -177,7 +177,7 @@ export class OfflineSyncManager {
         }
 
         try {
-          const { error } = await supabase.rpc('sync_offline_study_session', {
+          const { error } = await supabase.rpc('sync_offline_study_session' as any, {
             p_user_id: session.userId,
             p_local_date: session.localDate || getLocalDateString(),
             p_concept_ids: session.conceptIds || [],

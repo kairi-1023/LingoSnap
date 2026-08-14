@@ -11,4 +11,5 @@ export * from './HomeHeader';
 export * from './Header';
 export * from './BottomTabBar';
 export * from './Typography';
+export * from './Input';
 

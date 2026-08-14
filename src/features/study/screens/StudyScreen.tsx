@@ -104,7 +104,7 @@ const StudyHubScreen: React.FC = React.memo(() => {
       <StatusBar barStyle={theme.statusBarStyle} backgroundColor={theme.background} />
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.keyboardAvoid}
       >
         <View style={styles.tabletWrapper}>

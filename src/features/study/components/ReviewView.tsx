@@ -396,6 +396,9 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'space-between',
     paddingVertical: spacing.md,
+    maxWidth: 600,
+    width: '100%',
+    alignSelf: 'center',
   },
   contentGroup: {
     gap: 12,

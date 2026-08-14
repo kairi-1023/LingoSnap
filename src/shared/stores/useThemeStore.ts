@@ -155,7 +155,7 @@ export const useThemeStore = create<ThemeState>()(
         }),
     }),
     {
-      name: 'togetherlingo-theme-store',
+      name: 'lingosnap-theme-store',
       storage: getThemeStorage(),
       partialize: (state) => ({ isDarkMode: state.isDarkMode }),
       version: 1,

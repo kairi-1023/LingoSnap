@@ -22,10 +22,10 @@ When a user opens a lesson, the app guides them through a step-by-step visual re
 "What is happening?"
         │
         ▼
-[Step 2: Reveal Target Word] (e.g. "eat")
+[Step 2: Show Native Meaning] (e.g. "먹다")
         │
         ▼
-[Step 3: Show Native Meaning] (e.g. "먹다")
+[Step 3: Reveal Target Word] (e.g. "eat")
         │
         ▼
 [Step 4: Play Pronunciation Audio] (BCP-47 TTS)

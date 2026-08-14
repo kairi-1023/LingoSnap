@@ -12,7 +12,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { HomeHeader } from '../../../shared/components/HomeHeader';
 import { BottomTabBar } from '../../../shared/components/BottomTabBar';
 import { Typography } from '../../../shared/components/Typography';
-import { spacing } from '../../../shared/theme/spacing';
+import { spacing, layout } from '../../../shared/theme/spacing';
 import { GuestAuthModal } from '../../../shared/components/GuestAuthModal';
 import { LanguageSelectModal } from '../../../shared/components/LanguageSelectModal';
 import { useTranslation } from 'react-i18next';
@@ -94,81 +94,82 @@ export const HomeScreen: React.FC = React.memo(() => {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.greetingSection}>
-          <View style={styles.greetingHeaderRow}>
-            <Typography
-              variant="sectionTitle"
-              ellipsizeMode="tail"
-              style={styles.greetingTitle}
-            >
-              {t('home.greeting', { name: userFirstName })}
-            </Typography>
-
-            <Pressable
-              style={({ pressed }) => [
-                styles.languageChip,
-                {
-                  backgroundColor: isDarkMode ? 'rgba(92, 184, 92, 0.15)' : '#F0FDF4',
-                  borderColor: isDarkMode ? 'rgba(92, 184, 92, 0.3)' : '#DCFCE7',
-                },
-                pressed && Platform.OS !== 'android' && { opacity: 0.7 },
-              ]}
-              android_ripple={{
-                color: 'rgba(92, 184, 92, 0.2)',
-                borderless: false,
-              }}
-              onPress={() => setIsLanguageModalVisible(true)}
-              accessibilityRole="button"
-            >
+        <View style={styles.tabletWrapper}>
+          <View style={styles.greetingSection}>
+            <View style={styles.greetingHeaderRow}>
               <Typography
-                variant="caption"
-                style={[styles.languageChipText, { color: theme.primary }]}
+                variant="sectionTitle"
+                ellipsizeMode="tail"
+                style={styles.greetingTitle}
               >
-                {langPairFlags.formatted}
+                {t('home.greeting', { name: userFirstName })}
               </Typography>
-            </Pressable>
+
+              <Pressable
+                style={({ pressed }) => [
+                  styles.languageChip,
+                  {
+                    backgroundColor: isDarkMode ? 'rgba(92, 184, 92, 0.15)' : '#F0FDF4',
+                    borderColor: isDarkMode ? 'rgba(92, 184, 92, 0.3)' : '#DCFCE7',
+                  },
+                  pressed && Platform.OS !== 'android' && { opacity: 0.7 },
+                ]}
+                android_ripple={{
+                  color: 'rgba(92, 184, 92, 0.2)',
+                  borderless: false,
+                }}
+                onPress={() => setIsLanguageModalVisible(true)}
+                accessibilityRole="button"
+              >
+                <Typography
+                  variant="caption"
+                  style={[styles.languageChipText, { color: theme.primary }]}
+                >
+                  {langPairFlags.formatted}
+                </Typography>
+              </Pressable>
+            </View>
+
+            <Typography
+              variant="body"
+              color="textSecondary"
+              numberOfLines={2}
+              ellipsizeMode="tail"
+              style={styles.greetingSubtitle}
+            >
+              {t('home.studyPrompt')}
+            </Typography>
           </View>
 
-          <Typography
-            variant="body"
-            color="textSecondary"
-            numberOfLines={2}
-            ellipsizeMode="tail"
-            style={styles.greetingSubtitle}
-          >
-            {t('home.studyPrompt')}
-          </Typography>
-        </View>
+          {/* 1. PRIMARY: 5 Min Daily Lesson Hero Card */}
+          {nextLesson && (
+            <View style={styles.continueSection}>
+              <LessonCard
+                lesson={nextLesson}
+                progressPercent={nextLessonProgress}
+                theme={theme}
+                onSelectLesson={handleSelectLesson}
+              />
+            </View>
+          )}
 
-        {/* 1. PRIMARY: 5 Min Daily Lesson Hero Card */}
-        {nextLesson && (
-          <View style={styles.continueSection}>
-            <LessonCard
-              lesson={nextLesson}
-              progressPercent={nextLessonProgress}
+          {/* 2. SECONDARY: 오늘의 한 단어 */}
+          {todayWord && (
+            <TodayWordCard
               theme={theme}
-              onSelectLesson={handleSelectLesson}
+              word={todayWord}
+              onPress={() => router.push('/(tabs)/study')}
             />
-          </View>
-        )}
+          )}
 
-        {/* 2. SECONDARY: 오늘의 한 단어 */}
-        {todayWord && (
-          <TodayWordCard
+          {/* 3. REVIEW: 내가 배웠던 단어 */}
+          <ReviewWordsCard
             theme={theme}
-            word={todayWord}
-            onPress={() => router.push('/(tabs)/study')}
+            words={learnedWords}
+            isLoading={isLearnedWordsLoading}
+            onSelectWord={handleSelectLearnedWord}
           />
-        )}
-
-        {/* 3. REVIEW: 내가 배웠던 단어 */}
-        <ReviewWordsCard
-          theme={theme}
-          words={learnedWords}
-          isLoading={isLearnedWordsLoading}
-          onSelectWord={handleSelectLearnedWord}
-        />
-
+        </View>
       </ScrollView>
 
 
@@ -205,6 +206,11 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: spacing.md,
     flexGrow: 1,
+  },
+  tabletWrapper: {
+    maxWidth: layout.maxContentWidthTablet,
+    width: '100%',
+    alignSelf: 'center',
   },
   greetingSection: {
     marginTop: 6,

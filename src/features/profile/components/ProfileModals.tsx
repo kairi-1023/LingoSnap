@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity, TextInput, Image, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, TextInput, Image, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { X, Upload, Trash2 } from 'lucide-react-native';
 import { colors } from '../../../shared/theme/colors';
@@ -8,6 +8,7 @@ import { AppSheet } from '../../../shared/components/AppSheet';
 import { Button } from '../../../shared/components/Button';
 import { Typography } from '../../../shared/components/Typography';
 import { Avatar } from '../../../shared/components/Avatar';
+import { Input } from '../../../shared/components/Input';
 import { ThemeColors } from '../../../shared/stores/useThemeStore';
 import { UserEntity } from '../../../domain/entities/User';
 
@@ -85,63 +86,65 @@ export const ProfileModals: React.FC<ProfileModalsProps> = ({
   return (
     <>
       <AppSheet visible={isModalVisible} onClose={onCloseModal} title={t('settings.changeAvatar')}>
-        <Typography variant="caption" color="textSecondary" style={{ marginBottom: 12 }}>
-          {t('settings.changeAvatarDescription')}
-        </Typography>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <Typography variant="caption" color="textSecondary" style={{ marginBottom: 12 }}>
+            {t('settings.changeAvatarDescription')}
+          </Typography>
 
-        {previewUri ? (
-          <View style={styles.previewContainer}>
-            <Image source={{ uri: previewUri }} style={styles.previewAvatar} />
-          </View>
-        ) : (
-          <View style={styles.previewContainer}>
-            <Avatar size={80} fallbackText={userInitials} bgColor={theme.primary} textColor="#FFFFFF" borderColor={theme.background} borderWidth={3} />
-          </View>
-        )}
+          {previewUri ? (
+            <View style={styles.previewContainer}>
+              <Image source={{ uri: previewUri }} style={styles.previewAvatar} />
+            </View>
+          ) : (
+            <View style={styles.previewContainer}>
+              <Avatar size={80} fallbackText={userInitials} bgColor={theme.primary} textColor="#FFFFFF" borderColor={theme.background} borderWidth={3} />
+            </View>
+          )}
 
-        <TouchableOpacity
-          style={[styles.uploadLocalButton, { backgroundColor: theme.successBg, borderColor: theme.successBorder }]}
-          activeOpacity={0.8}
-          onPress={onPickLocalFile}
-        >
-          <Upload size={18} color={theme.primary} style={{ marginRight: 8 }} />
-          <Typography variant="bodyLarge" color="primary">{t('settings.selectPhoto')}</Typography>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.uploadLocalButton, { backgroundColor: theme.successBg, borderColor: theme.successBorder }]}
+            activeOpacity={0.8}
+            onPress={onPickLocalFile}
+          >
+            <Upload size={18} color={theme.primary} style={{ marginRight: 8 }} />
+            <Typography variant="bodyLarge" color="primary">{t('settings.selectPhoto')}</Typography>
+          </TouchableOpacity>
 
-        <TextInput
-          style={[styles.customUrlInput, { backgroundColor: theme.cardBackground, borderColor: theme.border, color: theme.textPrimary }]}
-          placeholder={t('settings.urlPlaceholder')}
-          placeholderTextColor={theme.textMuted}
-          value={customUrl}
-          onChangeText={onChangeCustomUrl}
-        />
+          <Input
+            containerStyle={{ marginBottom: spacing.sm }}
+            placeholder={t('settings.urlPlaceholder')}
+            value={customUrl}
+            onChangeText={onChangeCustomUrl}
+          />
 
-        <Button
-          label={isCompressing ? t('profile.compressingPhoto') : isUpdating ? t('settings.savingAvatar') : t('settings.saveAvatar')}
-          variant="primary"
-          disabled={isUpdating || isCompressing}
-          onPress={onSaveAvatar}
-        />
+          <Button
+            label={isCompressing ? t('profile.compressingPhoto') : isUpdating ? t('settings.savingAvatar') : t('settings.saveAvatar')}
+            variant="primary"
+            disabled={isUpdating || isCompressing}
+            onPress={onSaveAvatar}
+          />
+        </KeyboardAvoidingView>
       </AppSheet>
 
       <AppSheet visible={isNameModalVisible} onClose={onCloseNameModal} title={t('settings.editDisplayName')}>
-        <Typography variant="caption" color="textSecondary" style={{ marginBottom: 12 }}>
-          {t('settings.editDisplayNameDescription')}
-        </Typography>
-        <TextInput
-          style={[styles.customUrlInput, { backgroundColor: theme.cardBackground, borderColor: theme.border, color: theme.textPrimary }]}
-          placeholder={t('settings.namePlaceholder')}
-          placeholderTextColor={theme.textMuted}
-          value={inputDisplayName}
-          onChangeText={onChangeDisplayName}
-          maxLength={30}
-        />
-        <Button
-          label={isSavingName ? t('settings.savingName') : t('settings.saveDisplayName')}
-          variant="primary"
-          disabled={isSavingName}
-          onPress={onSaveDisplayName}
-        />
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <Typography variant="caption" color="textSecondary" style={{ marginBottom: 12 }}>
+            {t('settings.editDisplayNameDescription')}
+          </Typography>
+          <Input
+            containerStyle={{ marginBottom: spacing.sm }}
+            placeholder={t('settings.namePlaceholder')}
+            value={inputDisplayName}
+            onChangeText={onChangeDisplayName}
+            maxLength={30}
+          />
+          <Button
+            label={isSavingName ? t('settings.savingName') : t('settings.saveDisplayName')}
+            variant="primary"
+            disabled={isSavingName}
+            onPress={onSaveDisplayName}
+          />
+        </KeyboardAvoidingView>
       </AppSheet>
 
       <AppSheet visible={isPartnerModalVisible} onClose={() => {}} title={t('settings.partnerProfile')}>

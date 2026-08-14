@@ -6,6 +6,9 @@ echo ==============================================
 echo  Android Release Build Script
 echo ==============================================
 
+set NODE_ENV=production
+set EXPO_PUBLIC_ENV=production
+
 :: Step 1: Regenerate native assets from Expo config (app icon, splash, etc.)
 echo.
 echo [Step 1] Regenerating native assets from Expo configuration...
@@ -39,7 +42,7 @@ if not errorlevel 1 (
 echo [OK] .env.production looks valid.
 echo.
 
-:: Step 3: Check Environment Variables / Android SDK
+:: Step 3: Check Environment Variables / Android SDK & Keystore
 if "%ANDROID_HOME%"=="" (
     echo [WARNING] ANDROID_HOME environment variable is not set.
     echo Please check your Android SDK path.
@@ -47,6 +50,14 @@ if "%ANDROID_HOME%"=="" (
 if "%JAVA_HOME%"=="" (
     echo [WARNING] JAVA_HOME environment variable is not set.
     echo Please check your JDK path.
+)
+
+if not exist "%ANDROID_DIR%\app\release.keystore" (
+    if not exist "%USERPROFILE%\.android\debug.keystore" (
+        echo [NOTICE] No release.keystore found in android/app/
+        echo To sign your APK for Play Store release, place release.keystore in android/app/
+        echo Or run: keytool -genkey -v -keystore android/app/release.keystore -alias my-key-alias -keyalg RSA -keysize 2048 -validity 10000
+    )
 )
 
 if not exist "%ANDROID_DIR%\gradlew.bat" (

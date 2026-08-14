@@ -14,16 +14,32 @@
       "resizeMode": "contain",
       "backgroundColor": "#FFFDF7"
     },
+    "notification": {
+      "icon": "./assets/images/notification-icon.png",
+      "color": "#5CB85C"
+    },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.togetherlingo.app"
+      "bundleIdentifier": "com.lingosnap.app",
+      "infoPlist": {
+        "CFBundleDisplayName": "LingoSnap"
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#FFFDF7"
       },
-      "package": "com.togetherlingo.app"
+      "package": "com.lingosnap.app",
+      "versionCode": 1,
+      "permissions": [
+        "NOTIFICATIONS",
+        "POST_NOTIFICATIONS",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "READ_MEDIA_IMAGES"
+      ]
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
@@ -36,6 +52,13 @@
         }
       ],
       "expo-web-browser",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#5CB85C"
+        }
+      ],
       "expo-audio",
       "expo-asset",
       "expo-secure-store",

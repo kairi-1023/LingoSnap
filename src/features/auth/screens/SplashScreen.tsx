@@ -18,7 +18,7 @@ import { spacing } from '../../../shared/theme/spacing';
 import { Logo } from '../../../shared/components/Logo';
 import { Typography } from '../../../shared/components/Typography';
 import { useThemeStore } from '../../../shared/stores/useThemeStore';
-import { styles, ILLUSTRATION_MAX_WIDTH } from './SplashScreen.styles';
+import { styles } from './SplashScreen.styles';
 
 
 interface SplashScreenProps {

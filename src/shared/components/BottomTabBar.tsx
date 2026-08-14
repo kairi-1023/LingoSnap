@@ -11,6 +11,7 @@ import { Home, BookOpen, RotateCcw, BookMarked, User, LucideIcon } from 'lucide-
 import { Typography } from './Typography';
 import { spacing } from '../theme/spacing';
 import { useThemeStore } from '../stores/useThemeStore';
+import { useWindowSizeClass } from '../hooks/useWindowSizeClass';
 
 export type TabType = 'home' | 'study' | 'review' | 'dictionary' | 'profile';
 
@@ -41,12 +42,14 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = React.memo(({
 }) => {
   const { t } = useTranslation();
   const theme = useThemeStore((state) => state.theme);
+  const { isLandscape } = useWindowSizeClass();
 
   return (
     <SafeAreaView edges={['bottom']} style={[styles.safeArea, { backgroundColor: theme.cardBackground }]}>
       <View
         style={[
           styles.container,
+          isLandscape && styles.containerLandscape,
           {
             backgroundColor: theme.cardBackground,
             borderTopColor: theme.border,
@@ -79,6 +82,8 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = React.memo(({
               </View>
               <Typography
                 variant="caption"
+                numberOfLines={1}
+                ellipsizeMode="tail"
                 style={[
                   styles.tabLabel,
                   {
@@ -112,16 +117,21 @@ const styles = StyleSheet.create({
     minHeight: 62,
     alignItems: 'center',
     justifyContent: 'space-around',
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: 8,
     paddingVertical: 6,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     borderTopWidth: 1,
+    overflow: 'hidden',
     shadowColor: '#2F3437',
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.06,
     shadowRadius: 10,
     elevation: 8,
+  },
+  containerLandscape: {
+    minHeight: 48,
+    paddingVertical: 2,
   },
   tabButton: {
     flex: 1,

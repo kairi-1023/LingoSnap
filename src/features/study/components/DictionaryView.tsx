@@ -190,9 +190,11 @@ export const DictionaryView: React.FC = React.memo(() => {
           windowSize={5}
           removeClippedSubviews={Platform.OS === 'android'}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
           contentContainerStyle={[
             styles.listContent,
-            { paddingBottom: Platform.OS === 'android' ? 64 + 16 : 64 + insets.bottom + 16 }
+            { paddingBottom: 64 + insets.bottom + 16 }
           ]}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>

@@ -83,7 +83,6 @@ async function fetchVocabulariesByIdsOrConcepts(rawIds: string[], categoryFilter
 
 async function attachImageWords(localWords: WordEntity[]): Promise<WordEntity[]> {
   const ids = localWords.filter((word) => isValidUuid(word.id)).map((word) => word.id);
-  console.log('[StudyRepository IMAGE DEBUG] local image lookup ids:', ids);
   if (ids.length === 0) return localWords;
 
   try {
@@ -91,7 +90,6 @@ async function attachImageWords(localWords: WordEntity[]): Promise<WordEntity[]>
       .from('study_vocabularies')
       .select('id, lesson_id, word_en, concept_code')
       .in('id', ids);
-    console.log('[StudyRepository IMAGE DEBUG] vocabulary image rows:', { data, error });
     if (!data) return localWords;
 
     const imageWords = new Map(data.map((row: any) => [row.id, row.word_en || row.concept_code]));

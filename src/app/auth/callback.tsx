@@ -43,10 +43,6 @@ export default function AuthCallbackScreen() {
     if (processed.current) return;
     processed.current = true;
 
-    console.log('[AUTH_DEBUG] Platform.OS:', Platform.OS);
-    console.log('[AUTH_DEBUG] auth/callback.tsx mounted - deep link received');
-    console.log('[AUTH_DEBUG] useGlobalSearchParams paramKeys:', Object.keys(params));
-
     const code = params.code as string | undefined;
     const hasAccessToken = !!(params as any).access_token;
     const hasError = !!(params as any).error;
@@ -58,51 +54,41 @@ export default function AuthCallbackScreen() {
         try {
           const initialUrl = await Linking.getInitialURL();
           if (initialUrl) {
-            console.log('[AUTH_DEBUG] Falling back to Linking.getInitialURL (URL present)');
             resolvedCode = extractCodeFromUrl(initialUrl) || undefined;
             const tokens = extractTokensFromHash(initialUrl);
             if (!resolvedCode && tokens.access_token) {
-              console.log('[AUTH_DEBUG] Setting session from hash tokens (implicit flow fallback)');
               const { data, error } = await supabase.auth.setSession({
                 access_token: tokens.access_token,
                 refresh_token: tokens.refresh_token || '',
               });
               if (!error && data?.session) {
-                console.log('[AUTH_DEBUG] Session established via hash tokens');
                 router.replace('/(tabs)');
                 return;
               }
             }
           }
         } catch (err: unknown) {
-          console.log('[AUTH_DEBUG] Linking.getInitialURL error:', err instanceof Error ? err.message : String(err));
+          if (__DEV__) console.warn('[AUTH] Linking.getInitialURL error:', err instanceof Error ? err.message : String(err));
         }
       }
 
       try {
         if (resolvedCode) {
-          console.log('[AUTH_DEBUG] Calling exchangeCodeForSession with code');
           const { error } = await supabase.auth.exchangeCodeForSession(resolvedCode);
-          if (error) {
-            console.log('[AUTH_DEBUG] exchangeCodeForSession error:', error.message);
-          } else {
-            console.log('[AUTH_DEBUG] exchangeCodeForSession succeeded');
+          if (error && __DEV__) {
+            console.warn('[AUTH] exchangeCodeForSession error:', error.message);
           }
-        } else {
-          console.log('[AUTH_DEBUG] No auth code found, trying existing session');
         }
 
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
-          console.log('[AUTH_DEBUG] Session established, navigating to /(tabs)');
           router.replace('/(tabs)');
           return;
         }
 
-        console.log('[AUTH_DEBUG] No session after callback processing');
         router.replace('/(auth)');
       } catch (err: unknown) {
-        console.log('[AUTH_DEBUG] Exception:', err instanceof Error ? err.message : String(err));
+        if (__DEV__) console.warn('[AUTH] Callback exception:', err instanceof Error ? err.message : String(err));
         router.replace('/(auth)');
       }
     };

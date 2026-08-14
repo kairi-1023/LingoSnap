@@ -20,7 +20,7 @@ export interface AuthState {
 
 const buildGuestUser = (nativeLang: SupportedLanguage = 'en', targetLang: SupportedLanguage = 'ko'): UserEntity => ({
   id: 'guest_user',
-  email: 'guest@togetherlingo.com',
+  email: 'guest@lingosnap.app',
   displayName: 'Guest Explorer',
   nativeLang,
   targetLang,
@@ -77,7 +77,7 @@ export const useAuthStore = create<AuthState>()(
       },
     }),
     {
-      name: 'togetherlingo-auth-store',
+      name: 'lingosnap-auth-store',
       storage: getHybridStorage(),
       partialize: (state) => ({ user: state.user, isAuthenticated: state.isAuthenticated }),
       version: 1,

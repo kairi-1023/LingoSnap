@@ -5,7 +5,7 @@ import { ArrowRight, BookOpen, CheckCircle, Clock, Play } from 'lucide-react-nat
 import { Typography } from '../../../shared/components/Typography';
 import { spacing } from '../../../shared/theme/spacing';
 import { colors } from '../../../shared/theme/colors';
-import { ThemeColors } from '../../../shared/stores/useThemeStore';
+import { ThemeColors, useThemeStore } from '../../../shared/stores/useThemeStore';
 import { AILessonEntity } from '../../../domain/entities/AILesson';
 import { useSettingsStore } from '../../../shared/stores/useSettingsStore';
 import { useAuthStore } from '../../../shared/stores/useAuthStore';
@@ -15,6 +15,7 @@ import { Card } from '../../../shared/components/Card';
 
 interface LessonCardProps {
   lesson: AILessonEntity;
+  lessonNumber?: number;
   progressPercent?: number;
   theme: ThemeColors;
   variant?: 'hero' | 'simple';
@@ -23,21 +24,25 @@ interface LessonCardProps {
 
 export const LessonCard: React.FC<LessonCardProps> = React.memo(({
   lesson,
+  lessonNumber,
   progressPercent = 0,
   theme,
-  variant = 'hero',
+  variant = 'simple',
   onSelectLesson,
 }) => {
   const { t } = useTranslation();
   const displayLanguage = useSettingsStore((state) => state.displayLanguage);
   const user = useAuthStore((state) => state.user);
+  const isDarkMode = useThemeStore((state) => state.isDarkMode);
   const isCompleted = progressPercent >= 100 || (!!user?.id && lesson.userId === user.id && !!lesson.completedAt);
 
   const imageUrl = getVocabularyImageUrl(
     lesson.representativeWord || lesson.titleEn || lesson.title || 'family'
   );
 
-  const cardTitle = displayLanguage === 'ko' ? (lesson.titleKo || lesson.title) : (lesson.titleEn || lesson.title);
+  const rawTitle = displayLanguage === 'ko' ? (lesson.titleKo || lesson.title) : (lesson.titleEn || lesson.title);
+  const cleanTitle = rawTitle ? rawTitle.replace(/^Lesson\s*\d+[:.\s]*/i, '').trim() : '';
+  const cardTitle = lessonNumber ? `Lesson ${lessonNumber}: ${cleanTitle}` : rawTitle;
   const cardDescription = displayLanguage === 'ko' ? (lesson.descriptionKo || lesson.description) : (lesson.descriptionEn || lesson.description);
 
   const isStarted = progressPercent > 0 && !isCompleted;
@@ -46,27 +51,39 @@ export const LessonCard: React.FC<LessonCardProps> = React.memo(({
   if (variant === 'simple') {
     return (
       <Card
-        radius="normal"
-        padding={0}
+        radius="large"
+        padding={8}
         bg={theme.cardBackground}
-        borderColor={isStarted ? colors.primary : theme.border}
+        borderColor={theme.border}
         elevation="soft"
         style={styles.simpleContainer}
       >
         <Pressable
-          style={({ pressed }) => [
-            styles.simplePressable,
-            pressed && Platform.OS !== 'android' && { opacity: 0.85 },
-          ]}
-          android_ripple={{
-            color: theme.isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
-            borderless: false,
-          }}
           onPress={() => onSelectLesson(lesson.id)}
           accessibilityRole="button"
           accessibilityLabel={cardTitle}
+          android_ripple={{
+            color: isDarkMode
+              ? 'rgba(255,255,255,0.08)'
+              : 'rgba(0,0,0,0.06)',
+          }}
+          style={[
+            styles.simplePressable,
+            {
+              flexDirection: 'row',
+              alignItems: 'center',
+            },
+          ]}
         >
-          <View style={[styles.simpleImageWrapper, { backgroundColor: '#FFFFFF', borderColor: theme.border }]}>
+          {/* IMAGE */}
+          <View
+            style={[
+              styles.simpleImageWrapper,
+              {
+                borderColor: theme.border,
+              },
+            ]}
+          >
             <Image
               source={imageUrl ? { uri: imageUrl } : undefined}
               style={styles.cardImage}
@@ -74,28 +91,47 @@ export const LessonCard: React.FC<LessonCardProps> = React.memo(({
             />
           </View>
 
-          <View style={styles.contentWrapper}>
-            <Typography variant="cardTitle" numberOfLines={1} style={[styles.simpleTitle, { color: theme.textPrimary }]}>
-              {cardTitle}
+          {/* TEXT */}
+          <View style={styles.simpleContentWrapper}>
+            <Typography
+              numberOfLines={1}
+              style={[
+                styles.simpleTitle,
+                { color: theme.textPrimary },
+              ]}
+            >
+              {lessonNumber
+                ? `Lesson ${lessonNumber}: ${cardTitle}`
+                : cardTitle}
             </Typography>
 
             {!!cardDescription && (
-              <Typography variant="caption" numberOfLines={1} style={[styles.description, { color: theme.textSecondary }]}>
+              <Typography
+                numberOfLines={1}
+                style={[
+                  styles.simpleDescription,
+                  { color: theme.textSecondary },
+                ]}
+              >
                 {cardDescription}
               </Typography>
             )}
           </View>
 
-          <View style={styles.simpleActionArea}>
-            {isCompleted ? (
-              <View style={[styles.simpleIconBadge, { backgroundColor: theme.successBg }]}>
-                <CheckCircle size={16} color={colors.primary} />
-              </View>
-            ) : (
-              <View style={[styles.simpleIconBadge, { backgroundColor: theme.fillSubtle }]}>
-                <ArrowRight size={16} color={theme.textSecondary} />
-              </View>
-            )}
+          {/* ARROW */}
+          <View
+            style={[
+              styles.simpleIconBadge,
+              {
+                backgroundColor: theme.fillSubtle,
+              },
+            ]}
+          >
+            <ArrowRight
+              size={22}
+              color={theme.textSecondary}
+              strokeWidth={2}
+            />
           </View>
         </Pressable>
       </Card>
@@ -105,9 +141,9 @@ export const LessonCard: React.FC<LessonCardProps> = React.memo(({
   return (
     <Card
       radius="large"
-      padding={0}
-      bg={theme.isDarkMode ? theme.cardBackground : '#F4F9F4'}
-      borderColor={isStarted ? colors.primary : '#D8ECD8'}
+      padding="md"
+      bg={theme.cardBackground}
+      borderColor={isStarted ? colors.primary : theme.border}
       elevation="medium"
       style={styles.heroContainer}
     >
@@ -117,7 +153,7 @@ export const LessonCard: React.FC<LessonCardProps> = React.memo(({
           pressed && Platform.OS !== 'android' && { opacity: 0.9, transform: [{ scale: 0.99 }] },
         ]}
         android_ripple={{
-          color: theme.isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(92, 184, 92, 0.14)',
+          color: isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(92, 184, 92, 0.14)',
           borderless: false,
         }}
         onPress={() => onSelectLesson(lesson.id)}
@@ -126,9 +162,9 @@ export const LessonCard: React.FC<LessonCardProps> = React.memo(({
       >
         {/* 상단 5 Min Daily Lesson 뱃지 */}
         <View style={styles.topBadgeRow}>
-          <View style={[styles.heroBadge, { backgroundColor: colors.primary + '20' }]}>
-            <Clock size={14} color={colors.primary} />
-            <Typography variant="caption" style={styles.heroBadgeText}>
+          <View style={[styles.heroBadge, { backgroundColor: theme.fillSubtle }]}>
+            <Clock size={13} color={colors.primary} />
+            <Typography variant="caption" style={[styles.heroBadgeText, { color: theme.textSecondary }]}>
               {isCompleted
                 ? t('study.lessonCompleted')
                 : isStarted
@@ -156,12 +192,12 @@ export const LessonCard: React.FC<LessonCardProps> = React.memo(({
           </View>
 
           <View style={styles.contentWrapper}>
-            <Typography variant="cardTitle" numberOfLines={1} style={[styles.title, { color: theme.textPrimary }]}>
+            <Typography variant="cardTitle" numberOfLines={2} style={[styles.title, { color: theme.textPrimary }]}>
               {cardTitle}
             </Typography>
 
             {!!cardDescription && (
-              <Typography variant="caption" numberOfLines={1} style={[styles.description, { color: theme.textSecondary }]}>
+              <Typography variant="caption" numberOfLines={2} style={[styles.description, { color: theme.textSecondary }]}>
                 {cardDescription}
               </Typography>
             )}
@@ -172,14 +208,14 @@ export const LessonCard: React.FC<LessonCardProps> = React.memo(({
         {isStarted && (
           <View style={styles.progressSection}>
             <View style={styles.progressHeaderRow}>
-              <Typography variant="micro" style={{ color: theme.textSecondary }}>
+              <Typography variant="caption" style={{ color: theme.textSecondary, fontSize: 12 }}>
                 {t('home.lessonProgress', { defaultValue: '진행도' })}
               </Typography>
-              <Typography variant="micro" style={{ color: colors.primary, fontWeight: '700' }}>
+              <Typography variant="caption" style={{ color: colors.primary, fontWeight: '700', fontSize: 12 }}>
                 {`${Math.round(clampedProgress)}%`}
               </Typography>
             </View>
-            <View style={[styles.progressBarTrack, { backgroundColor: theme.isDarkMode ? theme.fillSubtle : '#E2F0E2' }]}>
+            <View style={[styles.progressBarTrack, { backgroundColor: theme.fillSubtle }]}>
               <View
                 style={[
                   styles.progressBarFill,
@@ -221,45 +257,61 @@ LessonCard.displayName = 'LessonCard';
 
 const styles = StyleSheet.create({
   simpleContainer: {
-    marginBottom: 8,
+    marginBottom: 14,
   },
+
   simplePressable: {
-    padding: 12,
     flexDirection: 'row',
     alignItems: 'center',
+    width: '100%',
+    minHeight: 96,
+    paddingHorizontal: 4,
+    paddingVertical: 8,
   },
+
   simpleImageWrapper: {
-    width: 52,
-    height: 52,
-    borderRadius: 12,
+    width: 76,
+    height: 76,
+    borderRadius: 16,
     borderWidth: 1,
     overflow: 'hidden',
-    marginRight: 12,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: '#FFFFFF',
+    flexShrink: 0,
+    marginRight: 16,
   },
+
+  simpleContentWrapper: {
+    flex: 1,
+    minWidth: 0,
+    justifyContent: 'center',
+  },
+
   simpleTitle: {
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 18,
+    lineHeight: 24,
     fontWeight: '700',
-    marginBottom: 2,
+    marginBottom: 5,
   },
-  simpleActionArea: {
-    marginLeft: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
+
+  simpleDescription: {
+    fontSize: 14,
+    lineHeight: 20,
   },
+
   simpleIconBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
+    width: 46,
+    height: 46,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
+    marginLeft: 12,
   },
   heroContainer: {
     marginBottom: 12,
   },
   pressableInner: {
-    padding: spacing.md,
+    width: '100%',
   },
   topBadgeRow: {
     flexDirection: 'row',
@@ -291,7 +343,7 @@ const styles = StyleSheet.create({
   },
   imageWrapper: {
     width: 68,
-    height: 68,
+    aspectRatio: 1,
     borderRadius: 14,
     borderWidth: 1,
     overflow: 'hidden',
@@ -304,7 +356,11 @@ const styles = StyleSheet.create({
   },
   contentWrapper: {
     flex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
+    minWidth: 0,
     justifyContent: 'center',
+    marginRight: 8,
   },
   title: {
 
@@ -338,7 +394,9 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   ctaButton: {
-    height: 48,
+    minHeight: 48,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
     borderRadius: 14,
     flexDirection: 'row',
     alignItems: 'center',

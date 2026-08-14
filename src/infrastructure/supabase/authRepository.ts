@@ -150,7 +150,7 @@ export class SupabaseAuthRepository implements IAuthRepository {
           avatarUrl: data.avatar_url || avatarUrl,
           displayName: data.display_name || displayName,
           createdAt: data.created_at,
-          updatedAt: data.updated_at,
+          updatedAt: data.updated_at || data.created_at || new Date().toISOString(),
         };
       }
     } catch (e) {
@@ -282,7 +282,7 @@ export class SupabaseAuthRepository implements IAuthRepository {
     } finally {
       try {
         if (Platform.OS === 'web' && typeof window !== 'undefined') {
-          window.localStorage.setItem('togetherlingo-account-deleted', 'true');
+          window.localStorage.setItem('lingosnap-account-deleted', 'true');
         }
       } catch {
         // ignore
@@ -326,7 +326,7 @@ export class SupabaseAuthRepository implements IAuthRepository {
           await new Promise((resolve) => setTimeout(resolve, 250));
           const retryResult = await supabase
             .from('users')
-            .select('id, email, native_lang, target_lang, avatar_url, display_name, created_at, updated_at')
+            .select('*')
             .eq('id', user.id)
             .maybeSingle();
           data = retryResult.data;
@@ -367,7 +367,7 @@ export class SupabaseAuthRepository implements IAuthRepository {
             avatarUrl: finalAvatarUrl,
             displayName: finalDisplayName,
             createdAt: data.created_at,
-            updatedAt: data.updated_at,
+            updatedAt: data.updated_at || data.created_at || new Date().toISOString(),
           };
         }
 
@@ -405,7 +405,7 @@ export class SupabaseAuthRepository implements IAuthRepository {
                   avatarUrl: updated.avatar_url || avatarUrl,
                   displayName: updated.display_name || displayName,
                   createdAt: updated.created_at,
-                  updatedAt: updated.updated_at,
+                  updatedAt: updated.updated_at || updated.created_at || new Date().toISOString(),
                 };
               }
             }
@@ -418,7 +418,7 @@ export class SupabaseAuthRepository implements IAuthRepository {
               avatarUrl: upserted.avatar_url || avatarUrl,
               displayName: upserted.display_name || displayName,
               createdAt: upserted.created_at,
-              updatedAt: upserted.updated_at,
+              updatedAt: upserted.updated_at || upserted.created_at || new Date().toISOString(),
             };
           }
         } catch (err) {

@@ -2,8 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 
-const STORAGE_VERSION_KEY = '@TogetherLingo:storage_version';
-const APP_VERSION_KEY = '@TogetherLingo:app_version';
+const STORAGE_VERSION_KEY = '@LingoSnap:storage_version';
+const APP_VERSION_KEY = '@LingoSnap:app_version';
 
 // Increment this when a breaking change is made to any persisted data format
 export const CURRENT_STORAGE_VERSION = 1;

@@ -10,7 +10,7 @@ export interface AvatarPickResult {
 }
 
 export async function pickAndCompressAvatar(
-  t: (key: string, defaultValue?: string) => string
+  t: (key: string, defaultValue?: any) => string
 ): Promise<AvatarPickResult> {
   if (Platform.OS === 'web' || typeof document !== 'undefined') {
     return new Promise<AvatarPickResult>((resolve) => {

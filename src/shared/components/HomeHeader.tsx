@@ -23,7 +23,7 @@ interface HomeHeaderProps {
 }
 
 export const HomeHeader: React.FC<HomeHeaderProps> = React.memo(({
-  userName = 'Together Lingo',
+  userName = 'LingoSnap',
   userAvatarUrl,
   userInitials = 'U',
   onProfilePress,

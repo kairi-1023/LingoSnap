@@ -24,6 +24,7 @@ import { getVocabularyImageUrl } from '../../../shared/utils/vocabularyImageMap'
 import { SrsRating } from '../../../domain/repositories/IStudyRepository';
 import { QuizOptionButton } from './QuizOptionButton';
 import { QuizCanvas } from './QuizCanvas';
+import { useWindowSizeClass } from '../../../shared/hooks/useWindowSizeClass';
 
 interface QuizViewProps {
   onCompleteQuizStep: () => void;
@@ -35,16 +36,15 @@ export const QuizView: React.FC<QuizViewProps> = React.memo(({ onCompleteQuizSte
   const user = useAuthStore((state) => state.user);
   const todayWords = useStudyStore((state) => state.todayWords);
   const theme = useThemeStore((state) => state.theme);
+  const { isShortHeight } = useWindowSizeClass();
 
-  const { height: screenHeight } = useWindowDimensions();
-  const isSmallScreen = screenHeight < 700;
+  const isSmallScreen = isShortHeight;
 
   // Responsive Quiz Image Height Range (130dp ~ 150dp smoothly)
   const responsiveImageHeight = useMemo(() => {
-    if (screenHeight < 680) return 130;
-    if (screenHeight >= 850) return 150;
+    if (isShortHeight) return 130;
     return 140;
-  }, [screenHeight]);
+  }, [isShortHeight]);
 
   const [questionIndex, setQuestionIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);

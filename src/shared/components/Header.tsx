@@ -46,7 +46,7 @@ export const Header: React.FC<HeaderProps> = React.memo(({
       )}
 
       {title ? (
-        <Typography variant="cardTitle" align="center" style={[styles.title, { color: theme.textPrimary }]}>
+        <Typography variant="cardTitle" align="center" numberOfLines={1} ellipsizeMode="tail" style={[styles.title, { color: theme.textPrimary }]}>
           {title}
         </Typography>
       ) : (

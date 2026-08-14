@@ -1,8 +1,10 @@
 import React from 'react';
-import { View, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Search, XCircle, Heart, Sparkles } from 'lucide-react-native';
 import { Typography } from '../../../shared/components/Typography';
+import { Input } from '../../../shared/components/Input';
 import { useThemeStore } from '../../../shared/stores/useThemeStore';
+import { useWindowSizeClass } from '../../../shared/hooks/useWindowSizeClass';
 import { colors } from '../../../shared/theme/colors';
 import { spacing } from '../../../shared/theme/spacing';
 
@@ -30,35 +32,36 @@ export const DictionaryToolbar: React.FC<DictionaryToolbarProps> = React.memo(({
   t,
 }) => {
   const { theme } = useThemeStore();
+  const { isSmallWidth } = useWindowSizeClass();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isSmallWidth && styles.containerSmall]}>
       {/* Search Input Bar */}
-      <View style={[styles.searchBar, { backgroundColor: theme.cardBackground, borderColor: theme.border }]}>
-        <Search size={16} color={theme.textSecondary} style={{ marginRight: 6 }} />
-        <TextInput
-          style={[styles.searchInput, { color: theme.textPrimary }]}
+      <View style={[styles.searchBarWrapper, isSmallWidth && styles.searchBarSmall]}>
+        <Input
           placeholder={t('study.search')}
-          placeholderTextColor={colors.textMuted}
           value={searchQuery}
           onChangeText={onSearchChange}
+          containerStyle={{ minHeight: 38, borderRadius: 14 }}
+          leftIcon={<Search size={16} color={theme.textSecondary} />}
+          rightIcon={
+            searchQuery.length > 0 ? (
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => onSearchChange('')}
+                accessibilityLabel={t('study.clearSearch')}
+                accessibilityRole="button"
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <XCircle size={15} color={theme.textSecondary} />
+              </TouchableOpacity>
+            ) : undefined
+          }
         />
-        {searchQuery.length > 0 && (
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={() => onSearchChange('')}
-            style={{ padding: 2 }}
-            accessibilityLabel={t('study.clearSearch')}
-            accessibilityRole="button"
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <XCircle size={15} color={theme.textSecondary} />
-          </TouchableOpacity>
-        )}
       </View>
 
       {/* Compact Filter Badges Row */}
-      <View style={styles.filtersRow}>
+      <View style={[styles.filtersRow, isSmallWidth && styles.filtersRowSmall]}>
         <TouchableOpacity
           style={[
             styles.filterChip,
@@ -140,14 +143,16 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     marginBottom: spacing.xs,
   },
-  searchBar: {
+  containerSmall: {
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    gap: 6,
+  },
+  searchBarWrapper: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: 38,
-    borderRadius: 14,
-    paddingHorizontal: spacing.sm,
-    borderWidth: 1,
+  },
+  searchBarSmall: {
+    width: '100%',
   },
   searchInput: {
     flex: 1,
@@ -158,6 +163,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+  },
+  filtersRowSmall: {
+    justifyContent: 'flex-start',
   },
   filterChip: {
     flexDirection: 'row',

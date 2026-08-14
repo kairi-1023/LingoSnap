@@ -16,11 +16,13 @@ import { Toast } from '../../../shared/components/Toast';
 import { useAuth } from '../../../shared/hooks/useAuth';
 import { useThemeStore } from '../../../shared/stores/useThemeStore';
 import { useTranslation } from 'react-i18next';
+import { useWindowSizeClass } from '../../../shared/hooks/useWindowSizeClass';
 
 export const WelcomeScreen: React.FC = () => {
   const { t } = useTranslation();
   const { handleGoogleSignInWithLoading, signInAsGuest } = useAuth();
   const { theme } = useThemeStore();
+  const { isShortHeight, isLandscape } = useWindowSizeClass();
   const [loadingGoogle, setLoadingGoogle] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -50,14 +52,14 @@ export const WelcomeScreen: React.FC = () => {
       >
         <View style={styles.container}>
           {/* Top Header Section with Logo & Brand Hierarchy */}
-          <View style={styles.headerSection}>
+          <View style={[styles.headerSection, (isShortHeight || isLandscape) && styles.headerSectionShort]}>
             <View style={styles.logoWrapper}>
-              <Logo width={190} height={130} />
+              <Logo width={isLandscape ? 120 : 190} height={isLandscape ? 80 : 130} />
               <Typography
                 variant="hero"
                 color="textPrimary"
                 align="center"
-                style={styles.brandTitle}
+                style={isLandscape ? [styles.brandTitle, styles.brandTitleLandscape] : styles.brandTitle}
               >
                 {t('auth.brandTitle')}
               </Typography>
@@ -138,6 +140,9 @@ const styles = StyleSheet.create({
     width: '100%',
     marginBottom: 44,
   },
+  headerSectionShort: {
+    marginBottom: 20,
+  },
   logoWrapper: {
     marginBottom: 16,
     alignItems: 'center',
@@ -147,6 +152,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginTop: 8,
     letterSpacing: -0.5,
+  },
+  brandTitleLandscape: {
+    fontSize: 22,
+    marginTop: 2,
   },
   headline: {
     fontSize: 20,

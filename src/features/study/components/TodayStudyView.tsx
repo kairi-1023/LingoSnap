@@ -10,10 +10,13 @@ import { SkeletonCard } from '../../../shared/components/Skeleton';
 import { EmptyState } from '../../../shared/components/EmptyState';
 import { useHomeScreen } from '../../home/hooks/useHomeScreen';
 import { LessonCard } from '../../home/components/LessonCard';
+import { useWindowSizeClass } from '../../../shared/hooks/useWindowSizeClass';
 
 export const TodayStudyView: React.FC = React.memo(() => {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
+  const { isMedium, isExpanded, isLandscape } = useWindowSizeClass();
+  const isWideScreen = isMedium || isExpanded || isLandscape;
 
   const {
     user,
@@ -58,15 +61,30 @@ export const TodayStudyView: React.FC = React.memo(() => {
     .sort(sortByLessonOrder);
 
 
-  const renderLessonCard = (lesson: typeof lessons[number]) => (
-    <LessonCard
-      key={lesson.id}
-      lesson={lesson}
-      progressPercent={lessonProgressMap[lesson.id] || 0}
-      theme={theme}
-      variant="simple"
-      onSelectLesson={handleSelectLesson}
-    />
+  const renderIncompleteLessonCard = (lesson: typeof lessons[number], index: number) => (
+    <View key={lesson.id} style={isWideScreen ? styles.lessonCardWrapperWide : styles.lessonCardWrapperFull}>
+      <LessonCard
+        lesson={lesson}
+        lessonNumber={index + 1}
+        progressPercent={lessonProgressMap[lesson.id] || 0}
+        theme={theme}
+        variant="simple"
+        onSelectLesson={handleSelectLesson}
+      />
+    </View>
+  );
+
+  const renderCompletedLessonCard = (lesson: typeof lessons[number], index: number) => (
+    <View key={lesson.id} style={isWideScreen ? styles.lessonCardWrapperWide : styles.lessonCardWrapperFull}>
+      <LessonCard
+        lesson={lesson}
+        lessonNumber={incompleteLessons.length + index + 1}
+        progressPercent={lessonProgressMap[lesson.id] || 0}
+        theme={theme}
+        variant="simple"
+        onSelectLesson={handleSelectLesson}
+      />
+    </View>
   );
 
 
@@ -79,13 +97,6 @@ export const TodayStudyView: React.FC = React.memo(() => {
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.lessonSection}>
-        <Typography variant="sectionTitle" style={[styles.sectionHeaderTitle, { color: theme.textPrimary }]}> 
-          {t('study.recommendedLessons')}
-        </Typography>
-        <Typography variant="body" color="textSecondary" style={{ marginBottom: spacing.md }}>
-          {t('study.recommendedLessonsSubtitle')}
-        </Typography>
-
         {isLessonsLoading ? (
           <View style={styles.skeletonList}>
             <SkeletonCard />
@@ -112,19 +123,23 @@ export const TodayStudyView: React.FC = React.memo(() => {
           <>
             {incompleteLessons.length > 0 && (
               <View style={styles.lessonGroup}>
-                <Typography variant="cardTitle" style={[styles.groupTitle, { color: theme.textPrimary }]}>
+                <Typography variant="sectionTitle" style={[styles.groupTitle, { color: theme.textPrimary }]}>
                   {t('study.incompleteLessons')}
                 </Typography>
-                <View style={styles.lessonList}>{incompleteLessons.map(renderLessonCard)}</View>
+                <View style={[styles.lessonList, isWideScreen && styles.lessonListWide]}>
+                  {incompleteLessons.map(renderIncompleteLessonCard)}
+                </View>
               </View>
             )}
 
             {completedLessons.length > 0 && (
               <View style={styles.lessonGroup}>
-                <Typography variant="cardTitle" style={[styles.groupTitle, { color: theme.textPrimary }]}>
+                <Typography variant="sectionTitle" style={[styles.groupTitle, { color: theme.textPrimary }]}>
                   {t('study.completedLessons')}
                 </Typography>
-                <View style={styles.lessonList}>{completedLessons.map(renderLessonCard)}</View>
+                <View style={[styles.lessonList, isWideScreen && styles.lessonListWide]}>
+                  {completedLessons.map(renderCompletedLessonCard)}
+                </View>
               </View>
             )}
           </>
@@ -152,7 +167,19 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   lessonList: {
+    width: '100%',
     gap: spacing.sm,
+  },
+  lessonListWide: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  lessonCardWrapperFull: {
+    width: '100%',
+  },
+  lessonCardWrapperWide: {
+    width: '48.5%',
   },
   lessonGroup: {
     marginBottom: spacing.lg,

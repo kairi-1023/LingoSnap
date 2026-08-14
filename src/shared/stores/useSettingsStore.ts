@@ -19,7 +19,7 @@ export const useSettingsStore = create<SettingsState>()(
       },
     }),
     {
-      name: 'togetherlingo-settings-store',
+      name: 'lingosnap-settings-store',
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({ displayLanguage: state.displayLanguage }),
       version: 2,

@@ -1,12 +1,5 @@
-import { StyleSheet, Dimensions } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { spacing } from '../../../shared/theme/spacing';
-
-export const getIllustrationMaxWidth = () => {
-  const { width } = Dimensions.get('window');
-  return Math.min(width - spacing.xl * 2, 340);
-};
-
-export const ILLUSTRATION_MAX_WIDTH = getIllustrationMaxWidth();
 
 export const styles = StyleSheet.create({
   safeArea: { flex: 1 },
@@ -22,7 +15,7 @@ export const styles = StyleSheet.create({
   brandTitle: { fontSize: 28, fontWeight: '700', marginTop: 8, letterSpacing: -0.5 },
   tagline: { marginTop: 6, lineHeight: 20, fontWeight: '500' },
   illustrationContainer: {
-    width: ILLUSTRATION_MAX_WIDTH, aspectRatio: 1,
+    width: '85%', maxWidth: 340, aspectRatio: 1,
     alignItems: 'center', justifyContent: 'center',
     borderRadius: 32, backgroundColor: '#FFFFFF',
     marginVertical: 16,

@@ -96,8 +96,9 @@ export const Card: React.FC<CardProps> & {
   const dynamicStyle: ViewStyle = {
     padding: paddingVal,
     borderRadius,
+    borderWidth: borderWidth ?? 1,
+    overflow: 'hidden',
   };
-  if (borderWidth !== undefined) dynamicStyle.borderWidth = borderWidth;
   if (bgIsColor) dynamicStyle.backgroundColor = bg;
   if (borderIsColor) dynamicStyle.borderColor = borderColor;
 
@@ -114,7 +115,6 @@ export const Card: React.FC<CardProps> & {
   })();
 
   const twClassName = [
-    'border',
     disabled ? 'bg-disabledBg border-borderDefault opacity-60' : '',
     !disabled && selected ? 'bg-surfaceSecondary border-primary' : '',
     !disabled && !selected && !bgIsColor ? bg : '',
@@ -123,9 +123,13 @@ export const Card: React.FC<CardProps> & {
 
   const cardContent = (
     <View
+      {...props}
       className={twClassName}
       style={[elevationStyle, dynamicStyle, style]}
-      {...props}
+      onLayout={(e) => {
+        console.log('[LayoutTrace] Card outer layout:', e.nativeEvent.layout, 'paddingVal:', paddingVal);
+        props.onLayout?.(e);
+      }}
     >
       {children}
     </View>

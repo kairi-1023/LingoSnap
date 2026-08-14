@@ -172,7 +172,7 @@ export const LanguageSelectModal: React.FC<LanguageSelectModalProps> = ({
         </Typography>
       </View>
 
-      <ScrollView style={{ maxHeight: 380 }} showsVerticalScrollIndicator={false}>
+      <ScrollView style={{ maxHeight: 380 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         {/* Section 1: Native Language */}
         <Typography variant="caption" color="textSecondary" style={{ marginBottom: 10, fontWeight: '700' }}>
           {t('profile.myNativeLanguage')}

@@ -38,6 +38,7 @@ import { shuffle } from '../../../shared/utils/arrayUtils';
 import { getVocabularyImageUrl } from '../../../shared/utils/vocabularyImageMap';
 import { parseTtsAudioUrl } from '../../../shared/utils/ttsStorage';
 import { getLangField } from '../../../shared/utils/languageUtils';
+import { useWindowSizeClass } from '../../../shared/hooks/useWindowSizeClass';
 
 function getQuizAnswerAudioUrl(question: AIQuizQuestionEntity | undefined, language: string): string | null {
   const data = question?.questionData;
@@ -303,6 +304,9 @@ export const QuizScreen: React.FC<QuizScreenProps> = React.memo(({
     [router]
   );
 
+  const { isMedium, isExpanded, isLandscape } = useWindowSizeClass();
+  const isWideScreen = isMedium || isExpanded || isLandscape;
+
   const progressPercentage = totalQuestions > 0 ? ((currentIndex + (screenState === 'completed' ? 1 : 0)) / totalQuestions) * 100 : 0;
   const finalScorePercentage = Math.round((correctAnswersCount / (totalQuestions || 1)) * 100);
 
@@ -337,7 +341,7 @@ export const QuizScreen: React.FC<QuizScreenProps> = React.memo(({
   }
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+    <SafeAreaView edges={['top']} style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <StatusBar barStyle={theme.statusBarStyle} backgroundColor={theme.background} />
 
       <CompactHeader
@@ -364,7 +368,11 @@ export const QuizScreen: React.FC<QuizScreenProps> = React.memo(({
                 {normalizedType === 'IMAGE_TO_WORD' && (
                   <View style={styles.questionSection}>
                     {!!currentQuestion.questionData?.imageUrl && (
-                      <View style={[styles.quizImageCard, { backgroundColor: '#FFFFFF', borderColor: theme.border }]}>
+                      <View style={[
+                        styles.quizImageCard,
+                        isLandscape && styles.quizImageCardLandscape,
+                        { backgroundColor: '#FFFFFF', borderColor: theme.border }
+                      ]}>
                         <Image
                           source={{ uri: currentQuestion.questionData.imageUrl }}
                           style={styles.quizImage}
@@ -437,7 +445,7 @@ export const QuizScreen: React.FC<QuizScreenProps> = React.memo(({
                       })}
                     </View>
                   ) : (
-                    <View style={styles.textOptionList}>
+                    <View style={[styles.textOptionList, isWideScreen && styles.textOptionGridWide]}>
                       {parsedOptions.map((opt, idx) => {
                         const optText = typeof opt === 'string' ? opt : opt?.text || opt?.word || '';
                         const isSelected = selectedOption === opt;
@@ -465,14 +473,18 @@ export const QuizScreen: React.FC<QuizScreenProps> = React.memo(({
                             key={idx}
                             style={[
                               styles.textOptionCard,
+                              isWideScreen && styles.textOptionCardWide,
                               { backgroundColor, borderColor, borderWidth: isSelected || isCorrectOpt ? 2 : 1 },
                             ]}
                             onPress={() => handleSelectOption(opt)}
                             disabled={screenState !== 'question'}
                             activeOpacity={0.7}
+                            accessibilityRole="button"
+                            accessibilityLabel={`선택지 ${idx + 1}번, ${optText}`}
+                            accessibilityState={{ selected: isSelected }}
                           >
                             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%', paddingHorizontal: spacing.sm }}>
-                              <Typography variant="body" style={[styles.optionText, { color: textColor, flex: 1, textAlign: 'center' }]}>
+                              <Typography variant="body" numberOfLines={2} ellipsizeMode="tail" style={[styles.optionText, { color: textColor, flex: 1, textAlign: 'center' }]}>
                                 {optText}
                               </Typography>
                               {badgeIcon}
@@ -489,14 +501,16 @@ export const QuizScreen: React.FC<QuizScreenProps> = React.memo(({
                   <TouchableOpacity
                     style={[styles.feedbackCard, { backgroundColor: '#E8F5E9', borderColor: colors.success }]}
                     activeOpacity={0.8}
-                     onPress={() => {
-                       const language = user?.targetLang || 'en';
-                       ttsService.speak({
-                         text: currentQuestion.correctAnswer,
-                         language,
-                         audioUrl: getQuizAnswerAudioUrl(currentQuestion, language),
-                       });
-                     }}
+                    accessibilityRole="button"
+                    accessibilityLabel={`정답입니다! 정답 단어는 ${currentQuestion.correctAnswer}입니다. 누르면 발음을 다시 듣습니다.`}
+                    onPress={() => {
+                      const language = user?.targetLang || 'en';
+                      ttsService.speak({
+                        text: currentQuestion.correctAnswer,
+                        language,
+                        audioUrl: getQuizAnswerAudioUrl(currentQuestion, language),
+                      });
+                    }}
                   >
                     <CheckCircle2 size={24} color={colors.success} />
                     <View style={{ marginLeft: 8, flex: 1 }}>
@@ -512,14 +526,16 @@ export const QuizScreen: React.FC<QuizScreenProps> = React.memo(({
                   <TouchableOpacity
                     style={[styles.feedbackCard, { backgroundColor: '#FFEBEE', borderColor: colors.error }]}
                     activeOpacity={0.8}
-                     onPress={() => {
-                       const language = user?.targetLang || 'en';
-                       ttsService.speak({
-                         text: currentQuestion.correctAnswer,
-                         language,
-                         audioUrl: getQuizAnswerAudioUrl(currentQuestion, language),
-                       });
-                     }}
+                    accessibilityRole="button"
+                    accessibilityLabel={`오답입니다. 정답은 ${currentQuestion.correctAnswer}입니다. 누르면 발음을 다시 듣습니다.`}
+                    onPress={() => {
+                      const language = user?.targetLang || 'en';
+                      ttsService.speak({
+                        text: currentQuestion.correctAnswer,
+                        language,
+                        audioUrl: getQuizAnswerAudioUrl(currentQuestion, language),
+                      });
+                    }}
                   >
                     <XCircle size={24} color={colors.error} />
                     <View style={{ marginLeft: 8, flex: 1 }}>
@@ -625,6 +641,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: spacing.xs,
   },
+  quizImageCardLandscape: {
+    height: 100,
+    marginBottom: 8,
+  },
   quizImage: {
     width: '100%',
     height: '100%',
@@ -673,8 +693,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   imageOptionCard: {
-    width: '48%',
-    height: 120,
+    width: '48.5%',
+    aspectRatio: 1.33,
     borderRadius: 16,
     overflow: 'hidden',
     padding: spacing.xs,
@@ -686,12 +706,21 @@ const styles = StyleSheet.create({
   textOptionList: {
     gap: 12, // Exactly 12dp Option gap
   },
+  textOptionGridWide: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
   textOptionCard: {
-    height: 56, // Exactly 56dp Option height
+    minHeight: 56,
+    paddingVertical: 8,
     paddingHorizontal: spacing.lg,
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  textOptionCardWide: {
+    width: '48.5%',
   },
   optionText: {
     fontSize: 18,

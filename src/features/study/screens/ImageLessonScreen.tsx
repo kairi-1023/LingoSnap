@@ -37,6 +37,7 @@ import { WordEntity } from '../../../domain/entities/Word';
 import { LessonVocabulary } from '../../../domain/entities/LessonVocabulary';
 import { getLangField } from '../../../shared/utils/languageUtils';
 import { useTtsAudio } from '../../../shared/hooks/useTtsAudio';
+import { useWindowSizeClass } from '../../../shared/hooks/useWindowSizeClass';
 
 export type ScreenState = 'learning' | 'sentence_learning';
 
@@ -72,15 +73,10 @@ export const ImageLessonScreen: React.FC<ImageLessonScreenProps> = React.memo(({
   const theme = useThemeStore((state) => state.theme);
   const insets = useSafeAreaInsets();
 
-  const { height: windowHeight } = useWindowDimensions();
+  const { isShortHeight, isLandscape, isMedium, isExpanded } = useWindowSizeClass();
+  const isSplitPane = isLandscape || isMedium || isExpanded;
 
   // Responsive Image Viewport Height Scale for Android Screen Heights
-  const imageHeight = useMemo(() => {
-    if (windowHeight < 680) return 150; // Short screen compression (e.g. 360x640)
-    if (windowHeight >= 850) return 220; // Tall screen expansion (e.g. 412x915)
-    return 185; // Standard screen (e.g. 360x800, 390x844)
-  }, [windowHeight]);
-
   // Dynamic Word Typography Scaling (Prevents word wrap break for long target words)
   const getWordFontSize = useCallback((wordStr?: string) => {
     if (!wordStr) return 32;
@@ -459,14 +455,19 @@ export const ImageLessonScreen: React.FC<ImageLessonScreenProps> = React.memo(({
         contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding }]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.responsiveContainer}>
+        <View style={[styles.responsiveContainer, isSplitPane && styles.responsiveContainerSplit]}>
           {/* 1. Situation Image Viewport Anchor */}
-          <View style={[styles.situationViewport, { height: imageHeight, backgroundColor: '#FFFFFF', borderColor: theme.border }]}>
+          <View style={[
+            styles.situationViewport,
+            isSplitPane && styles.situationViewportSplit,
+            { backgroundColor: '#FFFFFF', borderColor: theme.border }
+          ]}>
             {currentVocab.image_url && !hasImageError ? (
               <Image
                 source={{ uri: currentVocab.image_url }}
                 style={styles.situationImage}
                 resizeMode="contain"
+                accessibilityLabel={currentVocab.word ? `${currentVocab.word} 상황 이미지` : '상황 이미지'}
                 onLoadEnd={() => setIsImageLoaded(true)}
                 onError={() => { setHasImageError(true); setIsImageLoaded(true); }}
               />
@@ -482,7 +483,7 @@ export const ImageLessonScreen: React.FC<ImageLessonScreenProps> = React.memo(({
           </View>
 
           {/* 2. Hybrid Center Flow Stage Canvas */}
-          <View style={styles.contentCanvas}>
+          <View style={[styles.contentCanvas, isSplitPane && styles.contentCanvasSplit]}>
             {/* Native Meaning Section */}
             <View style={styles.meaningSection}>
               <TouchableOpacity
@@ -493,6 +494,8 @@ export const ImageLessonScreen: React.FC<ImageLessonScreenProps> = React.memo(({
                   }
                 }}
                 activeOpacity={enableActiveRecall && !isMeaningRevealed ? 0.7 : 1}
+                accessibilityRole="button"
+                accessibilityLabel={enableActiveRecall && !isMeaningRevealed ? '단어 뜻 가림막. 누르면 뜻이 표시됩니다.' : `단어 뜻: ${currentVocab.meaning}`}
               >
                 {enableActiveRecall && !isMeaningRevealed ? (
                   <View style={styles.blindPlaceholderBar} />
@@ -519,8 +522,8 @@ export const ImageLessonScreen: React.FC<ImageLessonScreenProps> = React.memo(({
                   }
                 }}
                 activeOpacity={0.7}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                accessibilityLabel={enableActiveRecall && !isMeaningRevealed ? uiText.revealMeaning : uiText.activeRecallToggle}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                accessibilityLabel={enableActiveRecall && !isMeaningRevealed ? '단어 뜻 보이기' : '단어 가림막 토글'}
                 accessibilityRole="button"
               >
                 {enableActiveRecall && !isMeaningRevealed ? (
@@ -691,6 +694,13 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     paddingTop: spacing.xs,
   },
+  responsiveContainerSplit: {
+    maxWidth: 880,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: spacing.lg,
+  },
   mainChipButton: {
     width: MAIN_CHIP_SIZE, // Android standard 48x48dp Touch Target
     height: MAIN_CHIP_SIZE,
@@ -709,6 +719,8 @@ const styles = StyleSheet.create({
   },
   situationViewport: {
     width: '100%',
+    aspectRatio: 16 / 9,
+    maxHeight: 220,
     borderRadius: radius.cardLg,
     overflow: 'hidden',
     marginBottom: spacing.md, // 16px spacing between Image & Content
@@ -716,6 +728,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1, // Soft organic border line
+  },
+  situationViewportSplit: {
+    width: '48.5%',
+    marginBottom: 0,
   },
   situationImage: {
     width: '100%',
@@ -730,6 +746,10 @@ const styles = StyleSheet.create({
   contentCanvas: {
     width: '100%',
     paddingHorizontal: spacing.xs,
+  },
+  contentCanvasSplit: {
+    width: '48.5%',
+    paddingHorizontal: 0,
   },
   meaningSection: {
     flexDirection: 'row',
@@ -751,6 +771,8 @@ const styles = StyleSheet.create({
   blindPlaceholderBar: {
     height: 32,
     width: 140,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 8,
   },
   nativeMeaningText: {
     fontWeight: '700',

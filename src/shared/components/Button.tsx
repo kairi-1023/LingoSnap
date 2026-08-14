@@ -72,12 +72,12 @@ const ButtonComponent: React.FC<ButtonProps> = React.memo(({
   const getSizeStyles = (): { container: string; text: string } => {
     switch (size) {
       case 'sm':
-        return { container: 'h-[44px] px-4 rounded-[14px]', text: 'text-[12px]' };
+        return { container: 'min-h-[44px] py-2 px-4 rounded-[14px]', text: 'text-[12px]' };
       case 'lg':
-        return { container: 'h-[56px] px-8 rounded-[16px]', text: 'text-[16px]' };
+        return { container: 'min-h-[56px] py-3 px-8 rounded-[16px]', text: 'text-[16px]' };
       case 'md':
       default:
-        return { container: 'h-[56px] px-6 rounded-[16px]', text: 'text-[14px]' };
+        return { container: 'min-h-[56px] py-3 px-6 rounded-[16px]', text: 'text-[14px]' };
     }
   };
 

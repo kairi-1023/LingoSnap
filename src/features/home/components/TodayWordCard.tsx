@@ -4,7 +4,7 @@ import { ArrowRight, Sparkles, Volume2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Typography } from '../../../shared/components/Typography';
 import { spacing } from '../../../shared/theme/spacing';
-import { ThemeColors } from '../../../shared/stores/useThemeStore';
+import { ThemeColors, useThemeStore } from '../../../shared/stores/useThemeStore';
 import { WordEntity } from '../../../domain/entities/Word';
 import { getVocabularyImageUrl } from '../../../shared/utils/vocabularyImageMap';
 import { useTtsAudio } from '../../../shared/hooks/useTtsAudio';
@@ -23,6 +23,7 @@ export const TodayWordCard: React.FC<TodayWordCardProps> = ({
   onPress,
 }) => {
   const { t } = useTranslation();
+  const isDarkMode = useThemeStore((state) => state.isDarkMode);
   const { isPlaying, play: handlePlayWord } = useTtsAudio({
     text: word.wordTarget,
     language: word.targetLang || 'en',
@@ -36,7 +37,7 @@ export const TodayWordCard: React.FC<TodayWordCardProps> = ({
   return (
     <Card
       radius="large"
-      padding={0}
+      padding="md"
       bg={theme.cardBackground}
       borderColor={theme.border}
       elevation="soft"
@@ -44,11 +45,11 @@ export const TodayWordCard: React.FC<TodayWordCardProps> = ({
     >
       <Pressable
         style={({ pressed }) => [
-          styles.mainContent,
+          styles.pressableWrapper,
           pressed && Platform.OS !== 'android' && { opacity: 0.9 },
         ]}
         android_ripple={{
-          color: theme.isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
+          color: isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
           borderless: false,
         }}
         onPress={onPress}
@@ -90,41 +91,33 @@ export const TodayWordCard: React.FC<TodayWordCardProps> = ({
               {word.wordNative}
             </Typography>
           </View>
+
+          {/* 우측 컨트롤 액션 영역 */}
+          <View style={styles.actionColumn}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.audioButton,
+                { backgroundColor: theme.fillSubtle },
+                pressed && Platform.OS !== 'android' && { opacity: 0.7 },
+              ]}
+              android_ripple={{
+                color: 'rgba(92, 184, 92, 0.2)',
+                borderless: true,
+                radius: 22,
+              }}
+              onPress={() => handlePlayWord()}
+              accessibilityRole="button"
+              accessibilityLabel={t('study.playPronunciation')}
+            >
+              <Volume2 size={19} color={isPlaying ? theme.primary : theme.textSecondary} />
+            </Pressable>
+
+            <View style={styles.arrowButton}>
+              <ArrowRight size={20} color={theme.textSecondary} />
+            </View>
+          </View>
         </View>
       </Pressable>
-
-      {/* 우측 컨트롤 액션 영역 (Sibling 구조로 <button> 중첩 방지) */}
-      <View style={styles.actionColumn}>
-        <Pressable
-          style={({ pressed }) => [
-            styles.audioButton,
-            { backgroundColor: theme.fillSubtle },
-            pressed && Platform.OS !== 'android' && { opacity: 0.7 },
-          ]}
-          android_ripple={{
-            color: 'rgba(92, 184, 92, 0.2)',
-            borderless: true,
-            radius: 22,
-          }}
-          onPress={() => handlePlayWord()}
-          accessibilityRole="button"
-          accessibilityLabel={t('study.playPronunciation')}
-        >
-          <Volume2 size={19} color={isPlaying ? theme.primary : theme.textSecondary} />
-        </Pressable>
-
-        <Pressable
-          style={({ pressed }) => [
-            styles.arrowButton,
-            pressed && Platform.OS !== 'android' && { opacity: 0.7 },
-          ]}
-          onPress={onPress}
-          accessibilityRole="button"
-          accessibilityLabel={t('common.next', { defaultValue: '이동' })}
-        >
-          <ArrowRight size={20} color={theme.textSecondary} />
-        </Pressable>
-      </View>
     </Card>
   );
 };
@@ -132,62 +125,17 @@ export const TodayWordCard: React.FC<TodayWordCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    minHeight: 124,
     marginBottom: 12,
   },
-
-  mainContent: {
-    flex: 1,
-    padding: spacing.md,
-  },
-  imageFrame: {
-    width: 68,
-    height: 68,
-    borderRadius: 14,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  image: {
+  pressableWrapper: {
     width: '100%',
-    height: '100%',
-  },
-  content: {
-    flex: 1,
-    minWidth: 0,
-    marginLeft: 12,
-    marginRight: spacing.xs,
-  },
-  wordTargetText: {
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  actionColumn: {
-    paddingRight: spacing.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-  },
-  audioButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  arrowButton: {
-    padding: 4,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 6,
+    marginBottom: 8,
   },
-
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -202,10 +150,47 @@ const styles = StyleSheet.create({
   wordRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
+  },
+  imageFrame: {
+    width: 68,
+    aspectRatio: 1,
+    borderRadius: 14,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  content: {
+    flex: 1,
+    minWidth: 0,
+    marginLeft: 12,
+    marginRight: 10,
+  },
+  wordTargetText: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  actionColumn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginLeft: 'auto',
+  },
+  audioButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  arrowButton: {
+    padding: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
-
 
 
 
